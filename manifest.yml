@@ -1,0 +1,7 @@
+---
+memory: 512MB
+buildpack: staticfile_buildpack
+applications:
+- name: blockparty
+  memory: 512M
+  disk_quota: 100M
