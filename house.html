@@ -19,48 +19,6 @@
 		{name:"House5",address:"34A Bridge Street",price:"$90,000",image:"house5.jpg",contract:"abc-567"}
 	];
 
-	var listings=d3.select("#houses").selectAll("div").data(houses);
-
-	houseDiv=listings.enter()
-		.append("div")
-			.attr("class","col-md-3")
-			.append("div")
-				.attr("class","panel panel-primary");
-
-
-	houseDiv
-		.append("div")
-		.attr("class","panel-heading")
-		.append("h3")
-			.attr("class","panel-title")
-			.text(function(d){return d.name;});
-
-	var houseDivContent= houseDiv.append("div")
-		.attr("class","panel-body");
-
-	houseDivContent
-		.append("img")
-		.attr("src", function(d){return "images/" + d.image;})
-		.attr("class","houseImage center-block");
-	
-	houseDivContent
-		.append("div")
-		.attr("class","text-center")
-		.text(function(d){return d.price;});
-
-	houseDivContent
-		.append("div")
-			.append("input")
-				.attr("type","button")
-				.attr("class","btn btn-primary center-block")
-				.attr("value","Bid")
-				.attr("onClick",function(d){return "bidOnHouse('"+d.contract+"');"});
-	listings.exit().remove();
-	}
-
-    function bidOnHouse(contract) {
-	    alert("Bidding on contract " + contract + ".");
-    }
     </script>
     </head>
     <body>
@@ -72,8 +30,14 @@
 		  </div>
 	</nav>	    
 	<img alt="Pathfinder Logo" class="center-block" src="images/Pathfinder-Logo.png"/>
-	<div id="listings" class="container-fluid">
-		<div id="houses" class="row"></div>
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h3 class="panel-title">House Name</h3>
+		</div>
+		<div class="panel-body">
+			<img class="houseImage" src="images/house1.jpg"/>
+			<div>$ House Price </div>
+		</div>
 	</div>
     </body>
     <script language="javascript">
