@@ -1,7 +1,10 @@
 ---
-memory: 512MB
-buildpack: staticfile_buildpack
 applications:
 - name: blockparty
   memory: 512M
-  disk_quota: 100M
+disk_quota: 100MB
+buildpack: go_buildpack
+env:
+        GOPACKAGENAME : "blockparty"
+services:
+- TILT_REDIS

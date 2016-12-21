@@ -1,0 +1,26 @@
+{
+	"ImportPath": "github.com/seethedata/blockparty",
+	"GoVersion": "go1.7",
+	"GodepVersion": "v74",
+	"Deps": [
+		{
+			"ImportPath": "github.com/cloudfoundry-community/go-cfenv",
+			"Comment": "v1.14.0-7-gc567d77",
+			"Rev": "c567d77dab8551bc4077e68e5a04415f1d74a911"
+		},
+		{
+			"ImportPath": "github.com/garyburd/redigo/internal",
+			"Comment": "v1.0.0-5-gffa8d46",
+			"Rev": "ffa8d46ada782d81cfda81a0fbd9f45ceae448e8"
+		},
+		{
+			"ImportPath": "github.com/garyburd/redigo/redis",
+			"Comment": "v1.0.0-5-gffa8d46",
+			"Rev": "ffa8d46ada782d81cfda81a0fbd9f45ceae448e8"
+		},
+		{
+			"ImportPath": "github.com/mitchellh/mapstructure",
+			"Rev": "bfdb1a85537d60bc7e954e600c250219ea497417"
+		}
+	]
+}

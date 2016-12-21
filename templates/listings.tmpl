@@ -11,13 +11,7 @@
     <title>BlockParty</title>
     <script language="javascript">
 	function initialize() {
-	var houses=[
-		{name:"House1",address:"123 Main Street",price:"$300,000",image:"house1.jpg",contract:"abc-123"},
-		{name:"House2",address:"66 Pine Street",price:"$150,000",image:"house2.jpg",contract:"abc-234"},
-		{name:"House3",address:"8500 Rue Avenue",price:"$900,000",image:"house3.jpg",contract:"abc-345"},
-		{name:"House4",address:"1250 Maple Road",price:"$450,000",image:"house4.jpg",contract:"abc-456"},
-		{name:"House5",address:"34A Bridge Street",price:"$90,000",image:"house5.jpg",contract:"abc-567"}
-	];
+	var houses={{.Data}};
 
 	var listings=d3.select("#houses").selectAll("div").data(houses);
 
