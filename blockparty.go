@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/cloudfoundry-community/go-cfenv"
 	"github.com/garyburd/redigo/redis"
+	"github.com/gorilla/mux"
 	"html/template"
 	"log"
 	"net/http"
@@ -49,26 +50,12 @@ type House struct {
 	Price    string `json:"price" redis:"price"`
 	Image    string `json:"image" redis:"image"`
 	Contract string `json:"contract" redis:"contract"`
+	Status   string `json:"status" redis:"status"`
 }
 
 //JSONPayload is a generic Container to hold JSON
 type JSONPayload struct {
 	Data []House
-}
-
-type serviceList struct {
-	service map[string]interface{}
-}
-
-type serviceInfo struct {
-	Credentials  []string
-	Label        string
-	Name         string
-	Plan         string
-	Provider     string
-	Drain        string
-	Tags         []string
-	VolumeMounts []string
 }
 
 func getHouses() []byte {
@@ -85,10 +72,10 @@ func getHouses() []byte {
 
 	for _, v := range n {
 		r, err := redis.Values(c.Do("HGETALL", v))
-		err=redis.ScanStruct(r,&h)
-		check("ScanStruct",err)
+		err = redis.ScanStruct(r, &h)
+		check("ScanStruct", err)
 		listings = append(listings,
-			House{Name: h.Name, Address: h.Address, Price: h.Price, Image: h.Image, Contract: h.Contract})
+			House{Name: h.Name, Address: h.Address, Price: h.Price, Image: h.Image, Contract: h.Contract, Status: h.Status})
 	}
 
 	payload.Data = listings
@@ -97,13 +84,26 @@ func getHouses() []byte {
 	return houses
 }
 
-func listingHandler(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles("templates/listings.tmpl")
-	check("Parse template", err)
-	var listings JSONPayload
-	err = json.Unmarshal(getHouses(), &listings)
-	check("Unmarshal", err)
-	t.Execute(w, listings)
+func setDefaultHouses() {
+	var listings []House
+	listings = make([]House, 0)
+
+	listings = append(listings,
+		House{Name: "House1", Address: "123 Main Street", Price: "$300,000", Image: "house1.jpg", Contract: "abc-123", Status: "sold"},
+		House{Name: "House2", Address: "66 Pine Street", Price: "$150,000", Image: "house2.jpg", Contract: "abc-234", Status: "sold"},
+		House{Name: "House3", Address: "8500 Rue Avenue", Price: "$900,000", Image: "house3.jpg", Contract: "abc-345", Status: "sold"},
+		House{Name: "House4", Address: "1250 Maple Road", Price: "$450,000", Image: "house4.jpg", Contract: "abc-456", Status: "sold"},
+		House{Name: "House5", Address: "34A Bridge Street", Price: "$90,000", Image: "house5.jpg", Contract: "abc-567", Status: "sold"})
+
+	c := pool.Get()
+	defer c.Close()
+
+	for _, v := range listings {
+		_, err := c.Do("SADD", "houses", "house:"+v.Contract)
+		check("LPUSH", err)
+		_, err = c.Do("HMSET", "house:"+v.Contract, "name", v.Name, "address", v.Address, "price", v.Price, "image", v.Image, "contract", v.Contract, "status", v.Status)
+		check("HMSET", err)
+	}
 }
 
 func initialize() {
@@ -119,36 +119,23 @@ func initialize() {
 	setDefaultHouses()
 }
 
-func setDefaultHouses() {
-	var listings []House
-	listings = make([]House, 0)
-
-	listings = append(listings,
-		House{Name: "House1", Address: "123 Main Street", Price: "$300,000", Image: "house1.jpg", Contract: "abc-123"},
-		House{Name: "House2", Address: "66 Pine Street", Price: "$150,000", Image: "house2.jpg", Contract: "abc-234"},
-		House{Name: "House3", Address: "8500 Rue Avenue", Price: "$900,000", Image: "house3.jpg", Contract: "abc-345"},
-		House{Name: "House4", Address: "1250 Maple Road", Price: "$450,000", Image: "house4.jpg", Contract: "abc-456"},
-		House{Name: "House5", Address: "34A Bridge Street", Price: "$90,000", Image: "house5.jpg", Contract: "abc-567"})
-
-	c := pool.Get()
-	defer c.Close()
-
-	for _, v := range listings {
-		_, err := c.Do("SADD", "houses", "house:"+v.Contract)
-		check("LPUSH", err)
-		_, err = c.Do("HMSET", "house:"+v.Contract, "name", v.Name, "address", v.Address, "price", v.Price, "image", v.Image, "contract", v.Contract)
-		check("HMSET", err)
-	}
-
+func listingHandler(w http.ResponseWriter, r *http.Request) {
+	t, err := template.ParseFiles("templates/listings.tmpl")
+	check("Parse template", err)
+	var listings JSONPayload
+	err = json.Unmarshal(getHouses(), &listings)
+	check("Unmarshal", err)
+	t.Execute(w, listings)
 }
 
 func main() {
 	initialize()
-
-	http.HandleFunc("/", listingHandler)
+	router := mux.NewRouter().StrictSlash(true)
+	router.HandleFunc("/", listingHandler)
 	http.Handle("/images/", http.FileServer(http.Dir("")))
 	http.Handle("/css/", http.FileServer(http.Dir("")))
 	http.Handle("/fonts/", http.FileServer(http.Dir("")))
 	http.Handle("/js/", http.FileServer(http.Dir("")))
+	http.Handle("/", router)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
