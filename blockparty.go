@@ -88,11 +88,12 @@ func connect2Redis() {
 	password:=credentials["password"]
 	port:=strconv.FormatFloat(credentials["port"].(float64),'f',-1,64)
 	c, err := redis.DialURL(fmt.Sprintf("redis://%s:%s",host,port))
-	n,err:=c.Do("AUTH",password)
-	n,err=c.Do("PING")
-	log.Print(n)
 	check("Connect", err)
+	n,err:=c.Do("AUTH",password)
+	check("AUTH", err)
 	defer c.Close()
+
+
 
 }
 func main() {
