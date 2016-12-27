@@ -1,0 +1,7 @@
+{"houses":[
+	{"name": "House1", "address": "123 Main Street", "price": 300000, "image": "house1.jpg", "contract": "abc-123", "description": "A good house with 3 bd/2br", "bedrooms": 3, "bathrooms": 2,"status": "sold", "quality": 3},
+	{"name": "House2", "address": "66 Pine Street", "price": 150000, "image": "house2.jpg", "contract": "abc-234", "description": "Great starter house! 3bd/1br", "bedrooms": 3, "bathrooms": 1,"status": "sold", "quality": 3},
+	{"name": "House3", "address": "8500 Rue Avenue", "price": 900000, "image": "house3.jpg", "contract": "abc-345", "description": "Gorgeous home. 4bd/3br", "bedrooms" : 4, "bathrooms": 3,"status": "sold", "quality": 3},
+	{"name": "House4", "address": "1250 Maple Road", "price": 450000, "image": "house4.jpg", "contract": "abc-456", "description":"Beautiful home 4bd/3br and a pool", "bedrooms": 4, "bathrooms": 3, "status": "sold", "quality": 3},
+	{"name": "House5", "address": "34A Bridge Street", "price": 90000, "image": "house5.jpg", "contract": "abc-567", "description": "Great location! No HOA fees!", "bedrooms": 2, "bathrooms": 1, "status": "listed",  "quality": 3 }
+]}

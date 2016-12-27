@@ -8,6 +8,7 @@ import (
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/mux"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -17,39 +18,17 @@ import (
 var (
 	pool *redis.Pool
 )
-var	redis_keys = `{ "services" : [
-			{
-                                "platform": "pws",
-                                "service": "rediscloud",
-                                "host": "hostname",
-                                "port": "port",
-                                "password": "password"
-                        },
-			{
-                                "platform": "pcfdev",
-                                "service": "p-redis",
-                                "host": "host",
-                                "port": "port",
-                                "password": "password"
-                         },
-			 {
-                                "platform": "bluemix6",
-                                "service": "redis-2.6",
-                                "host": "hostname",
-                                "port": "port",
-                                "password": "password"
-                         }]
-            }`
+
 type cfServices struct {
-	Services	[]cfService `json:"services"`
+	Services []cfService `json:"services"`
 }
 
 type cfService struct {
 	Platform string `json:"platform"`
-	Name	string `json:"service"`
-	Host	string	`json:"host"`
-	Port	string	`json:"port"`
-	Password	string `json:"password"`
+	Name     string `json:"service"`
+	Host     string `json:"host"`
+	Port     string `json:"port"`
+	Password string `json:"password"`
 }
 
 func newPool(addr string, port string, password string) *redis.Pool {
@@ -78,15 +57,22 @@ func check(function string, e error) {
 
 //House that will be listed
 type House struct {
-	Name     string `json:"name" redis:"name"`
-	Address  string `json:"address" redis:"address"`
-	Price    string `json:"price" redis:"price"`
-	Image    string `json:"image" redis:"image"`
-	Contract string `json:"contract" redis:"contract"`
-	Description string `json:"description" redis:"description"`
-	Status   string `json:"status" redis:"status"`
+	Name        string  `json:"name" redis:"name"`
+	Address     string  `json:"address" redis:"address"`
+	Price       float64 `json:"price" redis:"price"`
+	Image       string  `json:"image" redis:"image"`
+	Contract    string  `json:"contract" redis:"contract"`
+	Description string  `json:"description" redis:"description"`
+	Bedrooms    float64 `json:"bedrooms" redis:"bedrooms"`
+	Bathrooms    float64 `json:"bathrooms" redis:"bathrooms"`
+	Status      string  `json:"status" redis:"status"`
+	Quality     int     `json:"quality" redis:"quality"`
 }
 
+//Listing of all houses
+type Houses struct {
+	Data []House `json:"houses"`
+}
 //JSONPayload is a generic Container to hold JSON
 type JSONPayload struct {
 	Data []House
@@ -109,7 +95,7 @@ func getHouses() []byte {
 		err = redis.ScanStruct(r, &h)
 		check("ScanStruct", err)
 		listings = append(listings,
-		House{Name: h.Name, Address: h.Address, Price: h.Price, Image: h.Image, Contract: h.Contract, Description: h.Description, Status: h.Status})
+		House{Name: h.Name, Address: h.Address, Price: h.Price, Image: h.Image, Contract: h.Contract, Description: h.Description, Bedrooms: h.Bedrooms, Bathrooms: h.Bathrooms, Status: h.Status, Quality: h.Quality})
 	}
 
 	payload.Data = listings
@@ -119,61 +105,62 @@ func getHouses() []byte {
 }
 
 func setDefaultHouses() {
-	var listings []House
-	listings = make([]House, 0)
+	file, err := ioutil.ReadFile("./houses.json")
+	check("Read JSON",err)
 
-	listings = append(listings,
-	House{Name: "House1", Address: "123 Main Street", Price: "$300,000", Image: "house1.jpg", Contract: "abc-123", Description: "A good house with 3 bd/2br", Status: "sold"},
-	House{Name: "House2", Address: "66 Pine Street", Price: "$150,000", Image: "house2.jpg", Contract: "abc-234", Description: "Great starter house! 3bd/1br", Status: "listed"},
-	House{Name: "House3", Address: "8500 Rue Avenue", Price: "$900,000", Image: "house3.jpg", Contract: "abc-345", Description: "Gorgeous home. 4bd/3br", Status: "sold"},
-	House{Name: "House4", Address: "1250 Maple Road", Price: "$450,000", Image: "house4.jpg", Contract: "abc-456", Description:"Beautiful home 4bd/3br and a pool", Status: "sold"},
-	House{Name: "House5", Address: "34A Bridge Street", Price: "$90,000", Image: "house5.jpg", Contract: "abc-567", Description: "Great location! No HOA fees!", Status: "sold"})
+	var listings Houses
+	err= json.Unmarshal(file,&listings)
 
 	c := pool.Get()
 	defer c.Close()
 
-	for _, v := range listings {
+	for _, v := range listings.Data {
 		_, err := c.Do("SADD", "houses", "house:"+v.Contract)
 		check("LPUSH", err)
-		_, err = c.Do("HMSET", "house:"+v.Contract, "name", v.Name, "address", v.Address, "price", 
-				v.Price, "image", v.Image, "contract", v.Contract, "description", v.Description, "status", v.Status)
+		_, err = c.Do("HMSET", "house:"+v.Contract, "name", v.Name, "address", v.Address, "price",
+			v.Price, "image", v.Image, "contract", v.Contract, "description", v.Description, "bedrooms", v.Bedrooms, "bathrooms", v.Bathrooms, "status", v.Status)
 		check("HMSET", err)
 	}
 }
 
 func initialize() {
+	var cfServices cfServices
 	fmt.Println("Starting")
+	file, err := ioutil.ReadFile("./services.json")
+	check("Read JSON",err)
+
+	err= json.Unmarshal(file,&cfServices)
+	check("Unmarshal",err)
+
 	env, _ := cfenv.Current()
 	services := env.Services
-	var cfServices cfServices
-	var credentials map[string] interface{}
+
+	var credentials map[string]interface{}
 	var host string
 	var password string
 	var port string
-	err:=json.Unmarshal([]byte(redis_keys),&cfServices)
-	check("Unmarshal",err)
 
-	for _,service:= range cfServices.Services  {
-		if _,ok:=services[service.Name]; ok {
-			credentials= services[service.Name][0].Credentials
-			if _,ok:= credentials[service.Host] ; ok {
-				host= credentials[service.Host].(string)
+	for _, service := range cfServices.Services {
+		if _, ok := services[service.Name]; ok {
+			credentials = services[service.Name][0].Credentials
+			if _, ok := credentials[service.Host]; ok {
+				host = credentials[service.Host].(string)
 			} else {
 				log.Fatal("Unable to identify Redis host from config. Platform attempted:" + service.Platform)
 			}
-			if _,ok:= credentials[service.Password]; ok {
-				password= credentials[service.Password].(string)
+			if _, ok := credentials[service.Password]; ok {
+				password = credentials[service.Password].(string)
 			} else {
 				log.Fatal("Unable to identify Redis password from config. Platform attempted:" + service.Platform)
 			}
-			if _,ok:= credentials[service.Port]; ok {
+			if _, ok := credentials[service.Port]; ok {
 				switch credentials[service.Port].(type) {
-					case string:
-						port= credentials[service.Port].(string)
-					case float64:
-						port= strconv.FormatFloat(credentials[service.Port].(float64), 'f', -1, 64)
-					default:
-						log.Fatal("Redis port value is of unexpected type.")
+				case string:
+					port = credentials[service.Port].(string)
+				case float64:
+					port = strconv.FormatFloat(credentials[service.Port].(float64), 'f', -1, 64)
+				default:
+					log.Fatal("Redis port value is of unexpected type.")
 				}
 			} else {
 				log.Fatal("Unable to identify Redis port from config. Platform attempted:" + service.Platform)
@@ -196,14 +183,14 @@ func listingHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func detailsHandler(w http.ResponseWriter, r *http.Request) {
-	vars:=mux.Vars(r)
-	id:=vars["contract-id"]
+	vars := mux.Vars(r)
+	id := vars["contract-id"]
 
 	c := pool.Get()
 	defer c.Close()
 
 	var h House
-	n, err := redis.Values(c.Do("HGETALL", "house:" + id))
+	n, err := redis.Values(c.Do("HGETALL", "house:"+id))
 	err = redis.ScanStruct(n, &h)
 	check("ScanStruct", err)
 	t, err := template.ParseFiles("templates/details.tmpl")
@@ -225,8 +212,8 @@ func main() {
 	initialize()
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", listingHandler)
-	router.HandleFunc("/details/{contract-id}",detailsHandler)
-	router.HandleFunc("/approve",approveHandler)
+	router.HandleFunc("/details/{contract-id}", detailsHandler)
+	router.HandleFunc("/approve", approveHandler)
 	http.Handle("/images/", http.FileServer(http.Dir("/app")))
 	http.Handle("/css/", http.FileServer(http.Dir("/app")))
 	http.Handle("/fonts/", http.FileServer(http.Dir("/app")))

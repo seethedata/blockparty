@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+    <head>
+    <link href="/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="/css/blockparty.css" rel="stylesheet"/>
+    <script type="text/javascript" src="/js/web3.js"></script>
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/js/d3.min.js"></script>
+    <script type="text/javascript" src="/js/blockparty.js"></script>
+    <title>BlockParty</title>
+    </head>
+    <body>
+	<nav class="navbar navbar-inverse">
+		<div class="container-fluid">
+			<div class="navbar-header">
+				<a class="navbar-brand" href="../"><span class="glyphicon glyphicon-home"></span> BlockParty</a>
+			</div>
+		  </div>
+	</nav>	    
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-xs-3">
+			</div>
+			<div class="col-xs-6">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<h3 class="panel-title"> {{.Name}}</h3>
+					</div>
+					<div class="panel-body">
+						<div class="col-xs-3">
+						<img alt="house image" src="/images/{{.Image}}" class="houseImage"/>
+							<div><span class="glyphicon glyphicon-bed"> {{.Bedrooms}} bedrooms</span></div>
+							<div><span class="glyphicon glyphicon-scale"> {{.Bathrooms}} bathrooms</span></div>
+						</div>
+						<div class="col-xs-9 text-center description">
+							{{.Description}}
+						</div>
+						<div id="bidInfo">
+							<div class="col-xs-12 text-center">
+								<script language="javascript">
+									var price= {{.Price}} ;
+									document.write("Asking price: $" + price.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,'));
+								</script>
+							</div>
+							<div class="col-xs-9">
+								<div class="input-group">
+									<input type="text" class="form-control" placeholder="Bid Amount"/>
+									<span class="input-group-btn">
+										<input type="button" class="btn btn-primary" value="Bid"/>
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-xs-3">
+							<input type="button" class="btn btn-primary center-block" data-toggle="modal" data-target="#historyModal" value="View History"/>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-xs-3"></div>
+			<div class="modal fade" tabindex="-1" role="dialog" id="historyModal">
+			  <div class="modal-dialog" role="document">
+			    <div class="modal-content">
+			      <div class="modal-header">
+			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title">History for {{.Name}}</h4>
+			      </div>
+			      <div class="modal-body">
+			       	<div>2016-12-12 11:59:22 - House listed</div> 
+				<div class="glyphicon glyphicon-arrow-down"></div>
+			       	<div>2016-12-12 22:14:07 - House verified</div> 
+				<div class="glyphicon glyphicon-arrow-down"></div>
+				<div>2016-12-14 08:21:39 - Bid recevied from user</div> 
+				<div class="glyphicon glyphicon-arrow-down"></div>
+				<div>2016-12-16 14:45:13 - Bid recevied from user2</div> 
+			      </div>
+			      <div class="modal-footer">
+			        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+			      </div>
+			    </div><!-- /.modal-content -->
+			  </div><!-- /.modal-dialog -->
+			</div><!-- /.modal -->
+		</div>
+	</div>
+    </body>
+    <script language="javascript">
+	if ({{.Status}} == "sold") {
+		$("#bidInfo").css("visibility", "hidden");
+	} else {
+		$("#bidInfo").css("visibility", "visible");
+	}
+    </script>
+</html>

@@ -1,0 +1,25 @@
+{"services":[
+		{
+			"platform":"pws",
+			"service":"rediscloud",
+			"host":"hostname",
+			"port":"port",
+			"password":"password"
+			},
+						{
+			"platform":"pcfdev",
+			"service":"p-redis",
+			"host":"host",
+			"port":"port",
+			"password":"password"
+			},
+						{
+			"platform":"bluemix6",
+			"service":"redis-2.6",
+			"host":"hostname",
+			"port":"port",
+			"password":"password"
+		}
+		]
+}
+
