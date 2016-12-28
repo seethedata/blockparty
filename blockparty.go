@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"github.com/satori/go.uuid"
 )
 
 var (
@@ -72,6 +73,11 @@ type House struct {
 //Listing of all houses
 type Houses struct {
 	Data []House `json:"houses"`
+}
+
+type detailHouse struct {
+	House House
+	User	uuid.UUID
 }
 //JSONPayload is a generic Container to hold JSON
 type JSONPayload struct {
@@ -184,18 +190,21 @@ func listingHandler(w http.ResponseWriter, r *http.Request) {
 
 func detailsHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id := vars["contract-id"]
+	i := vars["contract-id"]
+	u:=uuid.NewV4()
+	var h House
 
 	c := pool.Get()
 	defer c.Close()
 
-	var h House
-	n, err := redis.Values(c.Do("HGETALL", "house:"+id))
+	n, err := redis.Values(c.Do("HGETALL", "house:"+i))
 	err = redis.ScanStruct(n, &h)
 	check("ScanStruct", err)
+
+	var d=detailHouse{House:h ,User: u}
 	t, err := template.ParseFiles("templates/details.tmpl")
 	check("Parse template", err)
-	t.Execute(w, h)
+	t.Execute(w, d)
 }
 
 func approveHandler(w http.ResponseWriter, r *http.Request) {
