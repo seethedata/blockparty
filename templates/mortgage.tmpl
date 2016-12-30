@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+    <head>
+    <link href="/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="/css/blockparty.css" rel="stylesheet"/>
+    <script type="text/javascript" src="/js/web3.js"></script>
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/js/d3.min.js"></script>
+    <script type="text/javascript" src="/js/blockparty.js"></script>
+    <title>BlockParty</title>
+    </head>
+    <body>
+	<nav class="navbar navbar-inverse">
+		<div class="container-fluid">
+			<div class="navbar-header">
+				<a class="navbar-brand" href="{{.Url}}"><span class="glyphicon glyphicon-home"></span> BlockParty</a>
+			</div>
+		  </div>
+	</nav>	    
+	<div class="container-fluid">
+		<h2 class="text-center" id="message"></h2>
+		<div class="col-xs-3"></div>
+		<div class="col-xs-6">
+			<span class="center-block">
+			<input id="mortgage" type="button" class="btn btn-primary" value="Apply for Mortgage"/>
+			<input id="return" type="button" class="btn btn-primary" value="Return to Listings" onClick="returnToListings();"/>
+			</span>
+		</div>
+		<div class="col-xs-3"></div>
+	</div>
+    </body>
+    <script>
+	mainUrl={{.Url}};
+	houses={{.Data}};
+	house=houses[0];
+
+	name=house.name;
+	contract=house.contract;
+
+	$("#message").text("Bid on " + name + " successful.");
+
+	$("#mortgage").attr("onClick","applyForMortgage()");
+
+	function returnToListings() {
+		window.location=mainUrl;
+	}
+
+	function applyForMortgage() {
+		window.location=mainUrl + "/house/" + contract + "/applyForMortgage";
+	}
+    </script>
+</html>

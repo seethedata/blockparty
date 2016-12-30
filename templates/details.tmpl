@@ -14,48 +14,42 @@
 	<nav class="navbar navbar-inverse">
 		<div class="container-fluid">
 			<div class="navbar-header">
-				<a class="navbar-brand" href="../"><span class="glyphicon glyphicon-home"></span> BlockParty</a>
+				<a class="navbar-brand" href="{{.Url}}"><span class="glyphicon glyphicon-home"></span> BlockParty</a>
 			</div>
 		  </div>
 	</nav>	    
 	<div class="container-fluid">
 		<div class="row">
-			<div class="col-xs-3">
-			</div>
+			<div class="col-xs-3"></div>
 			<div class="col-xs-6">
 				<div id="housePanel" class="panel panel-default">
 					<div class="panel-heading">
-						<h3 class="panel-title"> {{.House.Name}}</h3>
+						<h3 class="panel-title" id="panel-title"></h3>
 					</div>
 					<div class="panel-body">
 						<div class="col-xs-3">
-						<img alt="house image" src="/images/{{.House.Image}}" class="houseImage" onClick="showUser();"/>
-							<div><span class="glyphicon glyphicon-bed"> {{.House.Bedrooms}} bedrooms</span></div>
-							<div><span class="glyphicon glyphicon-scale"> {{.House.Bathrooms}} bathrooms</span></div>
+							<img alt="house image" id="houseImage" class="houseImage" onClick="showUser();"/>
+							<div>
+								<span class="glyphicon glyphicon-bed" id="bedrooms"></span>
+								<span class="glyphicon glyphicon-scale" id="bathrooms"></span>
+							</div>
 						</div>
 						<div class="label label-success" id="forSale">For Sale!</div>
-						<div class="col-xs-9 text-center description">
-							{{.House.Description}}
-						</div>
-						<div id="bidInfo">
-							<div class="col-xs-12 text-center">
-								<script language="javascript">
-									var price= {{.House.Price}} ;
-									document.write("Asking price: $" + price.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,'));
-								</script>
-							</div>
+						<div class="col-xs-9 text-center description" id="description"></div>
+						<input type="hidden" value="{{.User}}" id="bidUser"/>
+						<div class="col-xs-12 text-center bidInfo" id="price"></div>
+						<div class="col-xs-12">
 							<div class="col-xs-9">
-								<div class="input-group">
-									<input type="text" id="bidAmount" class="form-control" placeholder="Bid Amount"/>
-									<span class="input-group-btn"> 
-										<input type="button" class="btn btn-primary" value="Bid"/ onClick="bidOnHouse('{{.House.Contract}}','{{.User}}');"> 
+								<div class="input-group bidInfo" >
+									<input type="text" id="bidAmount" class="form-control" placeholder="Bid Amount (USD)"/>
+									<span class="input-group-btn">
+										<input id="bidButton" type="button" class="btn btn-primary" value="Bid" />
 									</span>
 								</div>
-								<input type="hidden" value="{{.User}}" id="bidUser"/>
 							</div>
-						</div>
-						<div class="col-xs-3">
-							<input type="button" class="btn btn-primary center-block" data-toggle="modal" data-target="#historyModal" value="View History"/>
+							<div class="col-xs-3">
+								<input type="button" class="btn btn-primary center-block" data-toggle="modal" data-target="#historyModal" value="View History"/>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -66,7 +60,7 @@
 			    <div class="modal-content">
 			      <div class="modal-header">
 			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-				<h4 class="modal-title">History for {{.House.Name}}</h4>
+				<h4 class="modal-title" id="modal-title"></h4>
 			      </div>
 			      <div class="modal-body">
 			       	<div>2016-12-12 11:59:22 - House listed</div> 
@@ -87,24 +81,69 @@
 		<div id="user" style="display: none" class="col-xs-12 text-center">User: {{.User}}</div>
 	</div>
     </body>
-    <script language="javascript">
+    <script>
+	mainURL="{{.Url}}";
+	houses={{.Data}};
+	user="{{.User}}"
+
+	house=houses[0];
+	name=house.name;
+	contract=house.contract;
+	price=house.price;
+	image=house.image;
+	description=house.description;
+	bedrooms=house.bedrooms;
+	bathrooms=house.bathrooms;
+	houseStatus=house.status;
+		
+	$("#panel-title").text(name);
+	$("#bedrooms").text(" " + bedrooms + " bedrooms");
+	$("#bathrooms").text(" " + bathrooms + " bathrooms");
+	$("#description").text(description);
+	$("#price").text("Asking Price: $" + price.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,'));
+	$("#bidButton").attr("onClick","bidOnHouse(contract,user);");
+	$("#modal-title").text("History for " + name);
+	$("#houseImage").attr("src", "/images/" + image);
+	
+
+
 	function showUser() {
 		$("#user").toggle();
 	}
 
 	function bidOnHouse(contract,user) {
 		bidAmount=$("#bidAmount").val();
-		alert(contract + " " + user + " " + bidAmount);
+		parameters={"bidAmount":bidAmount,"user":user};
+
+		var form = $('<form></form>');
+    		form.attr("method", "post");
+    		form.attr("action", mainURL+"/house/"+contract+"/bid");
+
+    		$.each(parameters, function(key, value) {
+        		var field = $('<input></input>');
+
+        		field.attr("type", "hidden");
+        		field.attr("name", key);
+        		field.attr("value", value);
+
+        		form.append(field);
+		});
+		$(document.body).append(form);
+    		form.submit();
+
 	}
-	if ({{.House.Status}} == "sold") {
-		$("#bidInfo").css("visibility", "hidden");
+
+
+	if (houseStatus == "sold") {
+		$(".bidInfo").css("visibility", "hidden");
 		$("#forSale").css("visibility", "hidden");
 	} else {
-		$("#bidInfo").css("visibility", "visible");
+		$(".bidInfo").css("visibility", "visible");
 		$("#housePanel").removeClass("panel-default");
 		$("#housePanel").addClass("panel-success");
 		$("#forSale").css("visibility", "visible");
 
 	}
+
     </script>
 </html>

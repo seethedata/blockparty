@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+    <head>
+    <link href="/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="/css/blockparty.css" rel="stylesheet"/>
+    <script type="text/javascript" src="/js/web3.js"></script>
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/js/d3.min.js"></script>
+    <script type="text/javascript" src="/js/blockparty.js"></script>
+    <title>BlockParty</title>
+    </head>
+    <body>
+	<nav class="navbar navbar-inverse">
+		<div class="container-fluid">
+			<div class="navbar-header">
+				<a class="navbar-brand" href="{{.Url}}"><span class="glyphicon glyphicon-home"></span> BlockParty</a>
+			</div>
+		  </div>
+	</nav>	    
+	<div class="container-fluid">
+		<h2 class="text-center" id="title"></h2>
+		<div id="bidTable">
+			<table class="table table-striped">
+			<thead>
+				<tr>
+				<th>User</th>
+				<th>Contract</th>
+				<th>Bid</th>
+				<th colspan="2" class="text-center">Action</th>
+				</tr>
+			</thead>
+			<tbody id="tableData">
+			</tbody>
+			</table>
+		</div>
+	</div>
+    </body>
+    <script>
+	mainUrl={{.Url}};
+	bids={{.Data}};
+
+
+	$("#title").text("Bids" );
+
+	table=d3.select("#tableData").selectAll("tr").data(bids);
+
+	row=table.enter()
+		.append("tr");
+	
+	row
+		.append("td")
+		.text(function(d){return d.user;});
+	row
+		.append("td")
+		.text(function(d){return d.contract;});
+	row
+		.append("td")
+		.text(function(d){return "$"+d.amount.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,');});
+	row
+		.append("td")
+			.append("input")
+				.attr("type","button")
+				.attr("class","btn btn-success center-block")
+				.attr("value","Accept")
+				.attr("onClick",function(d){return "acceptBid('" + d.user + "','" + d.contract + "');"});
+	row
+		.append("td")
+			.append("input")
+				.attr("type","button")
+				.attr("class","btn btn-danger center-block")
+				.attr("value","Reject")
+				.attr("onClick",function(d){return "rejectBid('" + d.user + "','" + d.contract + "');"});
+
+	function acceptBid(user,contract) {
+		alert("Accepting bid from user " + user + " for contract " + contract + ".");
+	}
+	function rejectBid(user,contract) {
+		alert("Rejecting bid from user " + user + " for contract " + contract + ".");
+	}
+    </script>
+</html>

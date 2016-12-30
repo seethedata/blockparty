@@ -18,6 +18,7 @@ import (
 
 var (
 	pool *redis.Pool
+	mainURL string ="https://blockparty.local.pcfdev.io"
 )
 
 type cfServices struct {
@@ -70,22 +71,36 @@ type House struct {
 	Quality     int     `json:"quality" redis:"quality"`
 }
 
-//Listing of all houses
-type Houses struct {
-	Data []House `json:"houses"`
-}
 
-type detailHouse struct {
-	House House
-	User	uuid.UUID
-}
 //JSONPayload is a generic Container to hold JSON
 type JSONPayload struct {
-	Data []House
+	Data []House `json:"data" redis:"data"`
+	User string	`json:"user" redis:"user"`
+	Url string	`json:"url" redis:"url"`
+}
+
+
+func newPayload() *JSONPayload{
+	return &JSONPayload{Url:mainURL}
+}
+
+type Bid struct {
+	User string `json:"user" redis:"user"`
+	Amount float64 `json:"amount" redis:"amount"`
+	Contract string `json:"contract" redis:"contract"`
+}
+
+type bidPayload struct {
+	Data []Bid `json:"data" redis:"data"`
+	User string	`json:"user" redis:"user"`
+	Url string	`json:"url" redis:"url"`
+}
+
+func newBidPayload() *bidPayload{
+	return &bidPayload{Url:mainURL}
 }
 
 func getHouses() []byte {
-	var payload JSONPayload
 	var listings []House
 	var h House
 	listings = make([]House, 0)
@@ -104,6 +119,7 @@ func getHouses() []byte {
 		House{Name: h.Name, Address: h.Address, Price: h.Price, Image: h.Image, Contract: h.Contract, Description: h.Description, Bedrooms: h.Bedrooms, Bathrooms: h.Bathrooms, Status: h.Status, Quality: h.Quality})
 	}
 
+	payload:=newPayload()
 	payload.Data = listings
 	houses, err := json.Marshal(payload)
 	check("getHouses()", err)
@@ -111,21 +127,32 @@ func getHouses() []byte {
 }
 
 func setDefaultHouses() {
-	file, err := ioutil.ReadFile("./houses.json")
-	check("Read JSON",err)
-
-	var listings Houses
-	err= json.Unmarshal(file,&listings)
-
 	c := pool.Get()
 	defer c.Close()
 
-	for _, v := range listings.Data {
-		_, err := c.Do("SADD", "houses", "house:"+v.Contract)
-		check("LPUSH", err)
-		_, err = c.Do("HMSET", "house:"+v.Contract, "name", v.Name, "address", v.Address, "price",
-			v.Price, "image", v.Image, "contract", v.Contract, "description", v.Description, "bedrooms", v.Bedrooms, "bathrooms", v.Bathrooms, "status", v.Status)
-		check("HMSET", err)
+
+	n, err := redis.Int(c.Do("EXISTS", "houses"))
+	check("EXISTS", err)
+	if n == 0 {
+		fmt.Println("Creating default houses.")
+		file, err := ioutil.ReadFile("./houses.json")
+		check("Read JSON",err)
+
+		var listings JSONPayload;
+		err= json.Unmarshal(file,&listings)
+		check("Unmarshal",err)
+
+
+		for _, v := range listings.Data {
+			contract:=getContractId()
+			_, err := c.Do("SADD", "houses", "house:"+contract)
+			check("LPUSH", err)
+			_, err = c.Do("HMSET", "house:"+contract, "name", v.Name, "address", v.Address, "price",
+				v.Price, "image", v.Image, "contract", contract, "description", v.Description, "bedrooms", v.Bedrooms, "bathrooms", v.Bathrooms, "status", v.Status)
+			check("HMSET", err)
+		}
+	} else {
+		fmt.Println("Default houses already exist. Skipping house creation.")
 	}
 }
 
@@ -188,27 +215,86 @@ func listingHandler(w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, listings)
 }
 
-func detailsHandler(w http.ResponseWriter, r *http.Request) {
+func getContractId() string {
+	return uuid.NewV4().String()
+}
+
+func getHouse(id string) House {
+	var h House
+	c := pool.Get()
+	defer c.Close()
+
+	n, err := redis.Values(c.Do("HGETALL", "house:"+id))
+	check("HGETALL", err)
+	err = redis.ScanStruct(n, &h)
+	check("ScanStruct", err)
+	return h
+}
+
+func bidsHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	i := vars["contract-id"]
-	u:=uuid.NewV4()
-	var h House
+
+	c := pool.Get()
+	defer c.Close()
+	n, err:= redis.Values(c.Do("ZREVRANGEBYSCORE", "bids:"+i,"+inf","-inf"))
+	check("ZREVRANGEBYSCORE", err)
+
+	p:=newBidPayload()
+	for _,v:=range n {
+		var bid Bid
+		err=json.Unmarshal(v.([]byte),&bid)
+		check("Unmarshal",err)
+		p.Data=append(p.Data,bid)
+	}
+	t, err := template.ParseFiles("templates/bids.tmpl")
+	check("Parse template", err)
+	t.Execute(w, p)
+
+}
+func bidHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	i := vars["contract-id"]
+	b:=r.PostFormValue("bidAmount")
+	u:=r.PostFormValue("user")
 
 	c := pool.Get()
 	defer c.Close()
 
-	n, err := redis.Values(c.Do("HGETALL", "house:"+i))
-	err = redis.ScanStruct(n, &h)
-	check("ScanStruct", err)
+	_, err:= c.Do("ZADD", "bids:"+i,b,"{\"user\":\"" + u + "\", \"amount\":" + b + ", \"contract\":\"" + i + "\"}")
+	check("ZADD", err)
+	var h House
+	h=getHouse(i)
+	var payload =newPayload()
+	payload.User=u;
+	payload.Data=append(payload.Data,h)
 
-	var d=detailHouse{House:h ,User: u}
-	t, err := template.ParseFiles("templates/details.tmpl")
+	t, err := template.ParseFiles("templates/bid.tmpl")
 	check("Parse template", err)
-	t.Execute(w, d)
+	t.Execute(w, payload)
 }
 
-func approveHandler(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles("templates/approve.tmpl")
+func detailsHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	i := vars["contract-id"]
+	u:=uuid.NewV4().String()
+
+	c := pool.Get()
+	defer c.Close()
+
+	var h House
+	h=getHouse(i)
+
+	var payload=newPayload()
+	payload.Data=append(payload.Data,h)
+	payload.User=u
+	t, err := template.ParseFiles("templates/details.tmpl")
+	check("Parse template", err)
+	t.Execute(w, payload)
+}
+
+func applyHandler(w http.ResponseWriter, r *http.Request) {
+	t, err := template.ParseFiles("templates/mortgage.tmpl")
 	check("Parse template", err)
 	var listings JSONPayload
 	err = json.Unmarshal(getHouses(), &listings)
@@ -221,8 +307,11 @@ func main() {
 	initialize()
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", listingHandler)
-	router.HandleFunc("/details/{contract-id}", detailsHandler)
-	router.HandleFunc("/approve", approveHandler)
+	router.HandleFunc("/house/{contract-id}", detailsHandler)
+	router.HandleFunc("/house/{contract-id}/bid", bidHandler)
+	router.HandleFunc("/house/{contract-id}/bids", bidsHandler)
+	router.HandleFunc("/house/{contract-id}/applyForMortgage", applyHandler)
+
 	http.Handle("/images/", http.FileServer(http.Dir("/app")))
 	http.Handle("/css/", http.FileServer(http.Dir("/app")))
 	http.Handle("/fonts/", http.FileServer(http.Dir("/app")))
