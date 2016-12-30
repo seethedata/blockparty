@@ -34,6 +34,7 @@
     </body>
     <script>
 	mainUrl={{.Url}};
+	user={{.User}};
 	houses={{.Data}};
 	house=houses[0];
 
@@ -45,11 +46,43 @@
 	$("#mortgage").attr("onClick","applyForMortgage()");
 
 	function returnToListings() {
-		window.location=mainUrl;
+		parameters={"user":user};
+
+		var form = $('<form></form>');
+    		form.attr("method", "post");
+    		form.attr("action", mainUrl);
+
+    		$.each(parameters, function(key, value) {
+        		var field = $('<input></input>');
+
+        		field.attr("type", "hidden");
+        		field.attr("name", key);
+        		field.attr("value", value);
+
+        		form.append(field);
+		});
+		$(document.body).append(form);
+    		form.submit();
 	}
 
 	function applyForMortgage() {
-		window.location=mainUrl + "/house/" + contract + "/applyForMortgage";
+		parameters={"user":user};
+
+		var form = $('<form></form>');
+    		form.attr("method", "post");
+    		form.attr("action", mainUrl + "/house/" + contract + "/applyForMortgage");
+
+    		$.each(parameters, function(key, value) {
+        		var field = $('<input></input>');
+
+        		field.attr("type", "hidden");
+        		field.attr("name", key);
+        		field.attr("value", value);
+
+        		form.append(field);
+		});
+		$(document.body).append(form);
+    		form.submit();
 	}
     </script>
 </html>

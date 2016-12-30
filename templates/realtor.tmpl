@@ -11,7 +11,13 @@
     <title>BlockParty</title>
     </head>
     <body>
-	{{template "navbar" .}}
+	<nav class="navbar navbar-inverse">
+		<div class="container-fluid">
+			<div class="navbar-header">
+				<a class="navbar-brand" href="#"><span class="glyphicon glyphicon-home"></span> BlockParty</a>
+			</div>
+		  </div>
+	</nav>	    
 	<img alt="Pathfinder Logo" class="center-block" src="images/Pathfinder-Logo.png"/>
 	<div id="listings" class="container-fluid">
 		<div id="houses" class="row"></div>
@@ -27,9 +33,10 @@
 	
 		houseDiv=listings.enter()
 			.append("div")
+				.filter(function(d) {return d.status != "sold"})
 				.attr("class","col-md-3")
 				.append("div")
-				.attr("class",function(d){if (d.status == 'sold') {return "panel panel-default";} else { return "panel panel-success";}});
+				.attr("class","panel panel-success");
 	
 	
 		houseDivHeading=houseDiv
@@ -48,7 +55,7 @@
 	
 		houseDivContent
 			.append("span")
-				.attr("style",function(d){if (d.status == 'sold') {return "visibility:hidden";} else { return "visibility:visible; ";}})
+				.attr("style","visibility:visible; ")
 				.attr("class","label label-success")
 				.text("For Sale!");
 		houseDivContent
@@ -71,17 +78,17 @@
 				.append("input")
 					.attr("type","button")
 					.attr("class","btn btn-primary center-block")
-					.attr("value","View Listing")
-					.attr("onClick",function(d){return "showDetails('"+d.contract+"');"});
+					.attr("value","View Bids")
+					.attr("onClick",function(d){return "showBids('"+d.contract+"');"});
 		listings.exit().remove();
 	}
 
-    	function showDetails(contract) {
+    	function showBids(contract) {
 		parameters={"user":user};
 
 		var form = $('<form></form>');
     		form.attr("method", "post");
-    		form.attr("action", mainUrl+"/house/"+contract);
+    		form.attr("action", mainUrl+"/house/" + contract + "/bids");
 
     		$.each(parameters, function(key, value) {
         		var field = $('<input></input>');
