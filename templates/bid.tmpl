@@ -11,21 +11,12 @@
     <title>BlockParty</title>
     </head>
     <body>
-	<nav class="navbar navbar-inverse">
-		<div class="container-fluid">
-			<div class="navbar-header">
-				<a class="navbar-brand" href="{{.Url}}"><span class="glyphicon glyphicon-home"></span> BlockParty</a>
-			</div>
-		  </div>
-	</nav>	    
+	 {{template "navbar" .}}
 	<div class="container-fluid">
-		<h2 class="text-center" id="message"></h2>
+		<h2 class="text-center" id="message">{{.Message}}</h2>
 		<div class="col-xs-3"></div>
 		<div class="col-xs-6 well">
-			<span class="col-xs-6">
-			<input id="mortgage" type="button" class="btn btn-primary center-block" value="Apply for Mortgage"/>
-			</span>
-			<span class="col-xs-6">
+			<span class="center-block">
 			<input id="return" type="button" class="btn btn-primary center-block" value="Return to Listings" onClick="returnToListings();"/>
 			</span>
 		</div>
@@ -41,48 +32,10 @@
 	name=house.name;
 	contract=house.contract;
 
-	$("#message").text("Bid on " + name + " successful.");
-
-	$("#mortgage").attr("onClick","applyForMortgage()");
 
 	function returnToListings() {
-		parameters={"user":user};
-
-		var form = $('<form></form>');
-    		form.attr("method", "post");
-    		form.attr("action", mainUrl);
-
-    		$.each(parameters, function(key, value) {
-        		var field = $('<input></input>');
-
-        		field.attr("type", "hidden");
-        		field.attr("name", key);
-        		field.attr("value", value);
-
-        		form.append(field);
-		});
-		$(document.body).append(form);
-    		form.submit();
+    		window.location=mainUrl;
 	}
 
-	function applyForMortgage() {
-		parameters={"user":user};
-
-		var form = $('<form></form>');
-    		form.attr("method", "post");
-    		form.attr("action", mainUrl + "/house/" + contract + "/applyForMortgage");
-
-    		$.each(parameters, function(key, value) {
-        		var field = $('<input></input>');
-
-        		field.attr("type", "hidden");
-        		field.attr("name", key);
-        		field.attr("value", value);
-
-        		form.append(field);
-		});
-		$(document.body).append(form);
-    		form.submit();
-	}
     </script>
 </html>

@@ -11,13 +11,7 @@
     <title>BlockParty</title>
     </head>
     <body>
-	<nav class="navbar navbar-inverse">
-		<div class="container-fluid">
-			<div class="navbar-header">
-				<a class="navbar-brand" href="{{.Url}}"><span class="glyphicon glyphicon-home"></span> BlockParty</a>
-			</div>
-		  </div>
-	</nav>	    
+	{{template "navbar" .}}
 	<div class="container-fluid">
 		<h2 class="text-center" id="title"></h2>
 		<div id="bidTable">
@@ -27,7 +21,7 @@
 				<th>User</th>
 				<th>Contract</th>
 				<th>Bid</th>
-				<th colspan="2" class="text-center">Action</th>
+				<th colspan="3" class="text-center">Action</th>
 				</tr>
 			</thead>
 			<tbody id="tableData">
@@ -72,11 +66,23 @@
 				.attr("value","Reject")
 				.attr("onClick",function(d){return "rejectBid('" + d.user + "','" + d.contract + "');"});
 
+	row
+		.append("td")
+			.append("input")
+				.attr("type","button")
+				.attr("class","btn btn-primary center-block")
+				.attr("value","View Mortgage")
+				.attr("onClick",function(d){return "viewMortgage('" + d.contract + "');"});
+
 	function acceptBid(user,contract) {
 		alert("Accepting bid from user " + user + " for contract " + contract + ".");
 	}
 	function rejectBid(user,contract) {
 		alert("Rejecting bid from user " + user + " for contract " + contract + ".");
+	}
+
+	function viewMortgage(contract) {
+    		window.location=mainUrl + "/house/" + contract +"/mortgage";
 	}
     </script>
 </html>

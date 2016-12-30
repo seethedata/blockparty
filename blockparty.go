@@ -7,18 +7,21 @@ import (
 	"github.com/cloudfoundry-community/go-cfenv"
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
+	"github.com/satori/go.uuid"
 	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
-	"github.com/satori/go.uuid"
 )
 
 var (
-	pool *redis.Pool
-	mainURL string ="https://blockparty.local.pcfdev.io"
+	pool    *redis.Pool
+	mainURL string       = "https://blockparty.local.pcfdev.io"
+	store   *sessions.CookieStore = sessions.NewCookieStore([]byte("BlockParty"))
 )
 
 type cfServices struct {
@@ -42,32 +45,32 @@ type House struct {
 	Contract    string  `json:"contract" redis:"contract"`
 	Description string  `json:"description" redis:"description"`
 	Bedrooms    float64 `json:"bedrooms" redis:"bedrooms"`
-	Bathrooms    float64 `json:"bathrooms" redis:"bathrooms"`
+	Bathrooms   float64 `json:"bathrooms" redis:"bathrooms"`
 	Status      string  `json:"status" redis:"status"`
 	Quality     int     `json:"quality" redis:"quality"`
 }
 
-
-
 type Bid struct {
-	User string `json:"user" redis:"user"`
-	Amount float64 `json:"amount" redis:"amount"`
-	Contract string `json:"contract" redis:"contract"`
-	Status string `json:"status" redis:"status"`
+	User     string  `json:"user" redis:"user"`
+	Amount   float64 `json:"amount" redis:"amount"`
+	Contract string  `json:"contract" redis:"contract"`
+	Status   string  `json:"status" redis:"status"`
 }
 
 type bidPayload struct {
-	Data []Bid `json:"data" redis:"data"`
-	User string	`json:"user" redis:"user"`
-	Url string	`json:"url" redis:"url"`
+	Data []Bid  `json:"data" redis:"data"`
+	User string `json:"user" redis:"user"`
+	Url  string `json:"url" redis:"url"`
 }
 
 //JSONPayload is a generic Container to hold JSON
 type JSONPayload struct {
 	Data []House `json:"data" redis:"data"`
-	User string	`json:"user" redis:"user"`
-	Url string	`json:"url" redis:"url"`
+	User string  `json:"user" redis:"user"`
+	Url  string  `json:"url" redis:"url"`
+	Message  string  `json:"message" redis:"message"`
 }
+
 func newPool(addr string, port string, password string) *redis.Pool {
 	return &redis.Pool{
 		MaxIdle:     3,
@@ -92,15 +95,12 @@ func check(function string, e error) {
 	}
 }
 
-
-
-func newPayload() *JSONPayload{
-	return &JSONPayload{Url:mainURL}
+func newPayload() *JSONPayload {
+	return &JSONPayload{Url: mainURL}
 }
 
-
-func newBidPayload() *bidPayload{
-	return &bidPayload{Url:mainURL}
+func newBidPayload() *bidPayload {
+	return &bidPayload{Url: mainURL}
 }
 
 func getHouses() []House {
@@ -117,8 +117,8 @@ func getHouses() []House {
 		r, err := redis.Values(c.Do("HGETALL", v))
 		err = redis.ScanStruct(r, &h)
 		check("ScanStruct", err)
-		houses=append(houses, House{Name: h.Name, Address: h.Address, Price: h.Price, Image: h.Image, Contract: h.Contract,
-						Description: h.Description, Bedrooms: h.Bedrooms, Bathrooms: h.Bathrooms, Status: h.Status, Quality: h.Quality})
+		houses = append(houses, House{Name: h.Name, Address: h.Address, Price: h.Price, Image: h.Image, Contract: h.Contract,
+			Description: h.Description, Bedrooms: h.Bedrooms, Bathrooms: h.Bathrooms, Status: h.Status, Quality: h.Quality})
 	}
 	return houses
 }
@@ -127,21 +127,19 @@ func setDefaultHouses() {
 	c := pool.Get()
 	defer c.Close()
 
-
 	n, err := redis.Int(c.Do("EXISTS", "houses"))
 	check("EXISTS", err)
 	if n == 0 {
 		fmt.Println("Creating default houses.")
 		file, err := ioutil.ReadFile("./houses.json")
-		check("Read JSON",err)
+		check("Read JSON", err)
 
-		var listings JSONPayload;
-		err= json.Unmarshal(file,&listings)
-		check("Unmarshal",err)
-
+		var listings JSONPayload
+		err = json.Unmarshal(file, &listings)
+		check("Unmarshal", err)
 
 		for _, v := range listings.Data {
-			contract:=getContractId()
+			contract := getContractId()
 			_, err := c.Do("SADD", "houses", "house:"+contract)
 			check("LPUSH", err)
 			_, err = c.Do("HMSET", "house:"+contract, "name", v.Name, "address", v.Address, "price",
@@ -157,10 +155,10 @@ func initialize() {
 	var cfServices cfServices
 	fmt.Println("Starting")
 	file, err := ioutil.ReadFile("./services.json")
-	check("Read JSON",err)
+	check("Read JSON", err)
 
-	err= json.Unmarshal(file,&cfServices)
-	check("Unmarshal",err)
+	err = json.Unmarshal(file, &cfServices)
+	check("Unmarshal", err)
 
 	env, _ := cfenv.Current()
 	services := env.Services
@@ -203,8 +201,6 @@ func initialize() {
 	setDefaultHouses()
 }
 
-
-
 func getContractId() string {
 	return uuid.NewV4().String()
 }
@@ -226,32 +222,32 @@ func getHouse(id string) House {
 }
 
 func getBids(i string) []Bid {
-	var bids []Bid=make([]Bid,0)
+	var bids []Bid = make([]Bid, 0)
 	c := pool.Get()
 	defer c.Close()
-	n, err:= redis.Values(c.Do("ZREVRANGEBYSCORE", "bids:"+i,"+inf","-inf"))
+	n, err := redis.Values(c.Do("ZREVRANGEBYSCORE", "bids:"+i, "+inf", "-inf"))
 	check("ZREVRANGEBYSCORE", err)
 
-	for _,v:=range n {
+	for _, v := range n {
 		var bid Bid
-		err=json.Unmarshal(v.([]byte),&bid)
-		check("Unmarshal",err)
-		bids=append(bids,bid)
+		err = json.Unmarshal(v.([]byte), &bid)
+		check("Unmarshal", err)
+		bids = append(bids, bid)
 	}
 	return bids
 }
 
-func getMyBids(u string) []Bid{
-	var bids []Bid=make([]Bid,0)
-	var myBids []Bid=make([]Bid,0)
+func getMyBids(u string) []Bid {
+	var bids []Bid = make([]Bid, 0)
+	var myBids []Bid = make([]Bid, 0)
 	var houses []House
-	houses=getHouses()
+	houses = getHouses()
 
-	for _,h:=range houses {
-		bids=getBids(h.Contract)
-		for _,b:=range bids {
-			if b.User==u {
-			myBids=append(myBids,b);
+	for _, h := range houses {
+		bids = getBids(h.Contract)
+		for _, b := range bids {
+			if b.User == u {
+				myBids = append(myBids, b)
 			}
 		}
 	}
@@ -261,109 +257,204 @@ func getMyBids(u string) []Bid{
 
 func listingsHandler(w http.ResponseWriter, r *http.Request) {
 	var u string
-	if r.PostFormValue("user")=="" {
-		log.Print("Creating New User Id")
-		u=getUserId()
-	} else  {
-		log.Print("Using existing User Id")
-		u=r.PostFormValue("user")
+	session, err := store.Get(r, "BlockPartySession")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-	t, err := template.ParseFiles("templates/listings.tmpl","templates/navbar.tmpl")
+
+	if _, ok := session.Values["user"]; ok {
+		u = session.Values["user"].(string)
+	} else {
+		u = getUserId()
+		session.Values["user"] = u
+	}
+
+	session.Save(r, w)
+	t, err := template.ParseFiles("templates/listings.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
-	listings:=newPayload()
+	listings := newPayload()
 	log.Print(listings.Url)
-	listings.Data=getHouses()
-	listings.User=u
+	listings.Data = getHouses()
+	listings.User = u
 	t.Execute(w, listings)
 }
 
-func bidsHandler(w http.ResponseWriter, r *http.Request) {
+func detailsHandler(w http.ResponseWriter, r *http.Request) {
+	var u string
+	session, err := store.Get(r, "BlockPartySession")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	u = session.Values["user"].(string)
+
 	vars := mux.Vars(r)
 	i := vars["contract-id"]
 
-	p:=newBidPayload()
-	p.Data=getBids(i)
+	c := pool.Get()
+	defer c.Close()
 
-	t, err := template.ParseFiles("templates/bids.tmpl")
+	var h House
+	h = getHouse(i)
+
+	var payload = newPayload()
+	payload.Data = append(payload.Data, h)
+	payload.User = u
+	t, err := template.ParseFiles("templates/details.tmpl", "templates/navbar.tmpl")
+	check("Parse template", err)
+	t.Execute(w, payload)
+}
+
+func bidsHandler(w http.ResponseWriter, r *http.Request) {
+	var u string
+	vars := mux.Vars(r)
+	i := vars["contract-id"]
+
+	session, err := store.Get(r, "BlockPartySession")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	u = session.Values["user"].(string)
+
+	p := newBidPayload()
+	p.Data = getBids(i)
+	p.User=u
+
+	t, err := template.ParseFiles("templates/bids.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
 	t.Execute(w, p)
 
 }
 
 func bidHandler(w http.ResponseWriter, r *http.Request) {
+	var u string
+	bidExists:=false
+	message:=""
+	session, err := store.Get(r, "BlockPartySession")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	u = session.Values["user"].(string)
+
 	vars := mux.Vars(r)
 	i := vars["contract-id"]
-	b:=r.PostFormValue("bidAmount")
-	u:=r.PostFormValue("user")
+	a := r.PostFormValue("bidAmount")
+	a = strings.Replace(a,",","",-1)
+	a = strings.Replace(a,".","",-1)
+
 
 	c := pool.Get()
 	defer c.Close()
 
-	_, err:= c.Do("ZADD", "bids:"+i,b,"{\"user\":\"" + u + "\", \"amount\":" + b + ", \"contract\":\"" + i + "\", \"status\":\"submitted\"}")
-	check("ZADD", err)
-	var h House
-	h=getHouse(i)
-	var payload =newPayload()
-	payload.User=u;
-	payload.Data=append(payload.Data,h)
+	n:=getBids(i)
 
-	t, err := template.ParseFiles("templates/bid.tmpl")
+	for _,v:=range n {
+		if v.User == u {
+			bidExists=true
+			break
+		}
+	}
+	if bidExists {
+		message="User " + u + " has already bid on house " + i + "."
+	} else {
+		_, err = c.Do("ZADD", "bids:" + i, a, "{\"user\":\"" + u + "\", \"amount\":" + a + ", \"contract\":\"" + i + "\", \"status\":\"submitted\"}")
+		check("ZADD", err)
+		message="Bid on " + i + " submitted."
+	}
+	var h House
+	h = getHouse(i)
+	var payload = newPayload()
+	payload.User = u
+	payload.Message=message
+	payload.Data = append(payload.Data, h)
+
+	t, err := template.ParseFiles("templates/bid.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
 	t.Execute(w, payload)
 }
 
-func detailsHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	i := vars["contract-id"]
-	u:=r.PostFormValue("user")
-
-	c := pool.Get()
-	defer c.Close()
-
-	var h House
-	h=getHouse(i)
-
-	var payload=newPayload()
-	payload.Data=append(payload.Data,h)
-	payload.User=u
-	t, err := template.ParseFiles("templates/details.tmpl")
-	check("Parse template", err)
-	t.Execute(w, payload)
-}
 
 func applyHandler(w http.ResponseWriter, r *http.Request) {
-	//u:=r.PostFormValue("user")
-	return 
+	var u string
+	session, err := store.Get(r, "BlockPartySession")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	u = session.Values["user"].(string)
+
+	vars := mux.Vars(r)
+	i := vars["contract-id"]
+
+	var h House
+	h = getHouse(i)
+	t, err := template.ParseFiles("templates/apply.tmpl", "templates/navbar.tmpl")
+	check("Parse template", err)
+	var payload = newPayload()
+	payload.Data = append(payload.Data, h)
+	payload.User = u
+	t.Execute(w, payload)
 }
 
 func mortgageHandler(w http.ResponseWriter, r *http.Request) {
-	u:=r.PostFormValue("user")
-	t, err := template.ParseFiles("templates/mortgage.tmpl")
+	var u string
+	session, err := store.Get(r, "BlockPartySession")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	u = session.Values["user"].(string)
+
+	vars := mux.Vars(r)
+	i := vars["contract-id"]
+
+	var h House
+	h = getHouse(i)
+	t, err := template.ParseFiles("templates/mortgage.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
-	var payload=newPayload()
-	payload.Data=getHouses()
-	payload.User=u
+	var payload = newPayload()
+	payload.Data = append(payload.Data, h)
+	payload.User = u
 	t.Execute(w, payload)
 }
 
 func realtorHandler(w http.ResponseWriter, r *http.Request) {
-	u:=r.PostFormValue("user")
-	t, err := template.ParseFiles("templates/realtor.tmpl")
+	var u string
+	session, err := store.Get(r, "BlockPartySession")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	u = session.Values["user"].(string)
+
+	t, err := template.ParseFiles("templates/realtor.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
-	var payload=newPayload()
-	payload.Data=getHouses()
-	payload.User=u
+	var payload = newPayload()
+	payload.Data = getHouses()
+	payload.User = u
 	t.Execute(w, payload)
 }
 
 func myBidsHandler(w http.ResponseWriter, r *http.Request) {
-	u:=r.PostFormValue("user")
-	myBids:=getMyBids(u)
-	t, err := template.ParseFiles("templates/mybids.tmpl")
+	var u string
+	session, err := store.Get(r, "BlockPartySession")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	u = session.Values["user"].(string)
+
+	log.Print("User from form is : " + u)
+	myBids := getMyBids(u)
+	var payload = newBidPayload()
+	payload.Data = myBids
+	payload.User = u
+
+	t, err := template.ParseFiles("templates/mybids.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
-	var payload=newBidPayload()
-	payload.Data=myBids
-	payload.User=u
 	t.Execute(w, payload)
 }
 
@@ -375,7 +466,7 @@ func main() {
 	router.HandleFunc("/house/{contract-id}/bid", bidHandler)
 	router.HandleFunc("/house/{contract-id}/bids", bidsHandler)
 	router.HandleFunc("/house/{contract-id}/applyForMortgage", applyHandler)
-	router.HandleFunc("/mortgage", mortgageHandler)
+	router.HandleFunc("/house/{contract-id}/mortgage", mortgageHandler)
 	router.HandleFunc("/realtor", realtorHandler)
 	router.HandleFunc("/mybids", myBidsHandler)
 

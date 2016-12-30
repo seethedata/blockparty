@@ -11,13 +11,7 @@
     <title>BlockParty</title>
     </head>
     <body>
-	<nav class="navbar navbar-inverse">
-		<div class="container-fluid">
-			<div class="navbar-header">
-				<a class="navbar-brand" href="{{.Url}}"><span class="glyphicon glyphicon-home"></span> BlockParty</a>
-			</div>
-		  </div>
-	</nav>	    
+	{{template "navbar" .}}
 	<div class="container-fluid">
 		<h2 class="text-center" id="title"></h2>
 		<div id="bidTable">

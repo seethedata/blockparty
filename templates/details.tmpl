@@ -11,13 +11,7 @@
     <title>BlockParty</title>
     </head>
     <body>
-	<nav class="navbar navbar-inverse">
-		<div class="container-fluid">
-			<div class="navbar-header">
-				<a class="navbar-brand" href="{{.Url}}"><span class="glyphicon glyphicon-home"></span> BlockParty</a>
-			</div>
-		  </div>
-	</nav>	    
+	{{template "navbar" .}}
 	<div class="container-fluid">
 		<div class="row">
 			<div class="col-xs-3"></div>
@@ -41,6 +35,7 @@
 						<div class="col-xs-12">
 							<div class="col-xs-9">
 								<div class="input-group bidInfo" >
+									<span class="input-group-addon">$</span>
 									<input type="text" id="bidAmount" class="form-control" placeholder="Bid Amount (USD)"/>
 									<span class="input-group-btn">
 										<input id="bidButton" type="button" class="btn btn-primary" value="Bid" />
@@ -105,15 +100,36 @@
 	$("#modal-title").text("History for " + name);
 	$("#houseImage").attr("src", "/images/" + image);
 	
+	$("#bidAmount").attr("onKeyUp","formatBid()");
 
+	function formatBid() {
+    		var selection = window.getSelection().toString();
+    		if ( selection !== '' ) {
+        		return;
+    		}
+ 
+    		if ( $.inArray( event.keyCode, [38,40,37,39] ) !== -1 ) {
+        		return;
+    		}
 
+		var input = $("#bidAmount").val();
+ 
+		var input = input.replace(/[\D\s\._\-]+/g, "");
+ 
+		input = input ? parseInt( input, 10 ) : 0;
+ 
+		$("#bidAmount").val( function() {
+    			return ( input === 0 ) ? "" : input.toLocaleString( "en-US" );
+		} );
+ 
+	}
 	function showUser() {
 		$("#user").toggle();
 	}
 
-	function bidOnHouse(contract,user) {
+	function bidOnHouse(contract) {
 		bidAmount=$("#bidAmount").val();
-		parameters={"bidAmount":bidAmount,"user":user};
+		parameters={"bidAmount":bidAmount};
 
 		var form = $('<form></form>');
     		form.attr("method", "post");

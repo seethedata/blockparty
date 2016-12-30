@@ -2,50 +2,19 @@
 <nav class="navbar navbar-inverse">
 	<div class="container-fluid">
 		<div class="navbar-header">
-			<a id="brand" onClick="showListings('{{.User}}')" class="navbar-brand"><span class="glyphicon glyphicon-home"></span> BlockParty</a>
-			<a id="myBids" onClick="showMyBids('{{.User}}')"><span class="glyphicon glyphicon glyphicon-list-alt"> My Bids</span></a>
+			<a id="brand" onClick="showListings();" class="navbar-brand"><span class="glyphicon glyphicon-home"></span> BlockParty</a>
 		</div>
+		<a class="navbar-brand navbar-right" id="myBids" onClick="showMyBids();"> <span class="glyphicon glyphicon glyphicon-list-alt"> MyBids</span></a>
 	  </div>
 </nav>	    
 <script>
-	function showListings(user) {
-		parameters={"user":user};
-
-		var form = $('<form></form>');
-    		form.attr("method", "post");
-    		form.attr("action", mainUrl);
-
-    		$.each(parameters, function(key, value) {
-        		var field = $('<input></input>');
-
-        		field.attr("type", "hidden");
-        		field.attr("name", key);
-        		field.attr("value", value);
-
-        		form.append(field);
-		});
-		$(document.body).append(form);
-    		form.submit();
+	mainUrl={{.Url}};
+	function showListings() {
+    		window.location=mainUrl
 	}
 
-	function showMyBids(user) {
-		parameters={"user":user};
-
-		var form = $('<form></form>');
-    		form.attr("method", "post");
-    		form.attr("action", mainUrl+"/mybids/");
-
-    		$.each(parameters, function(key, value) {
-        		var field = $('<input></input>');
-
-        		field.attr("type", "hidden");
-        		field.attr("name", key);
-        		field.attr("value", value);
-
-        		form.append(field);
-		});
-		$(document.body).append(form);
-    		form.submit();
+	function showMyBids() {
+    		window.location=mainUrl+"/mybids";
 }
 </script>
 {{end}}
