@@ -20,7 +20,8 @@ import (
 
 var (
 	pool    *redis.Pool
-	mainURL string       = "https://blockparty.local.pcfdev.io"
+	//mainURL string       = "https://blockparty.local.pcfdev.io"
+	mainURL string       = "https://blockparty.cfapps.io"
 	store   *sessions.CookieStore = sessions.NewCookieStore([]byte("BlockParty"))
 )
 
@@ -271,7 +272,7 @@ func listingsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	session.Save(r, w)
-	t, err := template.ParseFiles("templates/listings.tmpl", "templates/navbar.tmpl")
+	t, err := template.ParseFiles("templates/listings.tmpl", "templates/head.tmpl","templates/navbar.tmpl")
 	check("Parse template", err)
 	listings := newPayload()
 	log.Print(listings.Url)
@@ -301,7 +302,7 @@ func detailsHandler(w http.ResponseWriter, r *http.Request) {
 	var payload = newPayload()
 	payload.Data = append(payload.Data, h)
 	payload.User = u
-	t, err := template.ParseFiles("templates/details.tmpl", "templates/navbar.tmpl")
+	t, err := template.ParseFiles("templates/details.tmpl", "templates/head.tmpl","templates/navbar.tmpl")
 	check("Parse template", err)
 	t.Execute(w, payload)
 }
@@ -322,7 +323,7 @@ func bidsHandler(w http.ResponseWriter, r *http.Request) {
 	p.Data = getBids(i)
 	p.User=u
 
-	t, err := template.ParseFiles("templates/bids.tmpl", "templates/navbar.tmpl")
+	t, err := template.ParseFiles("templates/bids.tmpl", "templates/head.tmpl","templates/navbar.tmpl")
 	check("Parse template", err)
 	t.Execute(w, p)
 
@@ -345,6 +346,9 @@ func bidHandler(w http.ResponseWriter, r *http.Request) {
 	a = strings.Replace(a,",","",-1)
 	a = strings.Replace(a,".","",-1)
 
+	var h House
+	h = getHouse(i)
+
 
 	c := pool.Get()
 	defer c.Close()
@@ -358,20 +362,18 @@ func bidHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if bidExists {
-		message="User " + u + " has already bid on house " + i + "."
+		message="You have already bid on " + h.Name + "."
 	} else {
 		_, err = c.Do("ZADD", "bids:" + i, a, "{\"user\":\"" + u + "\", \"amount\":" + a + ", \"contract\":\"" + i + "\", \"status\":\"submitted\"}")
 		check("ZADD", err)
 		message="Bid on " + i + " submitted."
 	}
-	var h House
-	h = getHouse(i)
 	var payload = newPayload()
 	payload.User = u
 	payload.Message=message
 	payload.Data = append(payload.Data, h)
 
-	t, err := template.ParseFiles("templates/bid.tmpl", "templates/navbar.tmpl")
+	t, err := template.ParseFiles("templates/bid.tmpl", "templates/head.tmpl","templates/navbar.tmpl")
 	check("Parse template", err)
 	t.Execute(w, payload)
 }
@@ -391,7 +393,7 @@ func applyHandler(w http.ResponseWriter, r *http.Request) {
 
 	var h House
 	h = getHouse(i)
-	t, err := template.ParseFiles("templates/apply.tmpl", "templates/navbar.tmpl")
+	t, err := template.ParseFiles("templates/apply.tmpl", "templates/head.tmpl","templates/navbar.tmpl")
 	check("Parse template", err)
 	var payload = newPayload()
 	payload.Data = append(payload.Data, h)
@@ -413,7 +415,7 @@ func mortgageHandler(w http.ResponseWriter, r *http.Request) {
 
 	var h House
 	h = getHouse(i)
-	t, err := template.ParseFiles("templates/mortgage.tmpl", "templates/navbar.tmpl")
+	t, err := template.ParseFiles("templates/mortgage.tmpl", "templates/head.tmpl","templates/navbar.tmpl")
 	check("Parse template", err)
 	var payload = newPayload()
 	payload.Data = append(payload.Data, h)
@@ -430,7 +432,7 @@ func realtorHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	u = session.Values["user"].(string)
 
-	t, err := template.ParseFiles("templates/realtor.tmpl", "templates/navbar.tmpl")
+	t, err := template.ParseFiles("templates/realtor.tmpl", "templates/head.tmpl","templates/navbar.tmpl")
 	check("Parse template", err)
 	var payload = newPayload()
 	payload.Data = getHouses()
@@ -453,7 +455,7 @@ func myBidsHandler(w http.ResponseWriter, r *http.Request) {
 	payload.Data = myBids
 	payload.User = u
 
-	t, err := template.ParseFiles("templates/mybids.tmpl", "templates/navbar.tmpl")
+	t, err := template.ParseFiles("templates/mybids.tmpl", "templates/head.tmpl","templates/navbar.tmpl")
 	check("Parse template", err)
 	t.Execute(w, payload)
 }

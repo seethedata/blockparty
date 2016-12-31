@@ -1,55 +1,43 @@
 <!doctype html>
 <html>
-    <head>
-    <link href="/css/bootstrap.min.css" rel="stylesheet"/>
-    <link href="/css/blockparty.css" rel="stylesheet"/>
-    <script type="text/javascript" src="/js/web3.js"></script>
-    <script type="text/javascript" src="/js/jquery.min.js"></script>
-    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="/js/d3.min.js"></script>
-    <script type="text/javascript" src="/js/blockparty.js"></script>
-    <title>BlockParty</title>
-    </head>
+{{template "head"}}
     <body>
 	{{template "navbar" .}}
 	<div class="container-fluid">
-		<div class="row">
-			<div class="col-xs-3"></div>
-			<div class="col-xs-6">
+			<div class="center-block">
 				<div id="housePanel" class="panel panel-default">
 					<div class="panel-heading">
 						<h3 class="panel-title" id="panel-title"></h3>
 					</div>
 					<div class="panel-body">
-						<div class="col-xs-3">
-							<img alt="house image" id="houseImage" class="houseImage" onClick="showUser();"/>
-							<div>
-								<span class="glyphicon glyphicon-bed" id="bedrooms"></span>
-								<span class="glyphicon glyphicon-scale" id="bathrooms"></span>
-							</div>
-						</div>
 						<div class="label label-success" id="forSale">For Sale!</div>
-						<div class="col-xs-9 text-center description" id="description"></div>
+						<div>
+							<div>
+								<img alt="house image" id="houseImage" class="houseImage center-block" onClick="showUser();"/>
+							</div>
+							<div class="description" id="description"></div>
+						</div>
+						<div>
+							<div><span class="glyphicon glyphicon-bed" id="bedrooms"></span></div>
+							<div><span class="glyphicon glyphicon-scale" id="bathrooms"></span></div>
+						</div>
 						<input type="hidden" value="{{.User}}" id="bidUser"/>
 						<div class="col-xs-12 text-center bidInfo" id="price"></div>
-						<div class="col-xs-12">
-							<div class="col-xs-9">
-								<div class="input-group bidInfo" >
-									<span class="input-group-addon">$</span>
-									<input type="text" id="bidAmount" class="form-control" placeholder="Bid Amount (USD)"/>
-									<span class="input-group-btn">
-										<input id="bidButton" type="button" class="btn btn-primary" value="Bid" />
-									</span>
-								</div>
+						<div class="form-group">
+							<div class="input-group bidInfo" >
+								<span class="input-group-addon">$</span>
+								<input type="text" id="bidAmount" class="form-control" placeholder="Bid Amount"/>
+								<span class="input-group-btn">
+									<input id="bidButton" type="button" class="btn btn-success" value="Bid" />
+								</span>
 							</div>
-							<div class="col-xs-3">
-								<input type="button" class="btn btn-primary center-block" data-toggle="modal" data-target="#historyModal" value="View History"/>
-							</div>
+						</div>
+						<div class="form-group">
+							<input type="button" class="form-control btn btn-primary" data-toggle="modal" data-target="#historyModal" value="View History"/>
 						</div>
 					</div>
 				</div>
 			</div>
-			<div class="col-xs-3"></div>
 			<div class="modal fade" tabindex="-1" role="dialog" id="historyModal">
 			  <div class="modal-dialog" role="document">
 			    <div class="modal-content">
@@ -72,8 +60,7 @@
 			    </div><!-- /.modal-content -->
 			  </div><!-- /.modal-dialog -->
 			</div><!-- /.modal -->
-		</div>
-		<div id="user" style="display: none" class="col-xs-12 text-center">User: {{.User}}</div>
+			<div id="user" style="display: none" class="col-xs-12 text-center">User: {{.User}}</div>
 	</div>
     </body>
     <script>

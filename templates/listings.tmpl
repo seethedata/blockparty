@@ -1,20 +1,11 @@
 <!doctype html>
 <html>
-    <head>
-    <link href="/css/bootstrap.min.css" rel="stylesheet"/>
-    <link href="/css/blockparty.css" rel="stylesheet"/>
-    <script type="text/javascript" src="/js/web3.js"></script>
-    <script type="text/javascript" src="/js/jquery.min.js"></script>
-    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="/js/d3.min.js"></script>
-    <script type="text/javascript" src="/js/blockparty.js"></script>
-    <title>BlockParty</title>
-    </head>
+{{template "head"}}
     <body>
 	{{template "navbar" .}}
 	<img alt="Pathfinder Logo" class="center-block" src="images/Pathfinder-Logo.png"/>
-	<div id="listings" class="container-fluid">
-		<div id="houses" class="row"></div>
+	<div id="listings" class="container">
+		<div id="houses"></div>
 	</div>
     </body>
     <script>
@@ -27,9 +18,8 @@
 	
 		houseDiv=listings.enter()
 			.append("div")
-				.attr("class","col-md-3")
 				.append("div")
-				.attr("class",function(d){if (d.status == 'sold') {return "panel panel-default";} else { return "panel panel-success";}});
+				.attr("class",function(d){if (d.status == 'sold') {return "panel panel-primary";} else { return "panel panel-success";}});
 	
 	
 		houseDivHeading=houseDiv
@@ -70,7 +60,7 @@
 			.append("div")
 				.append("input")
 					.attr("type","button")
-					.attr("class","btn btn-primary center-block")
+					.attr("class",function(d){if (d.status == 'sold') {return "btn btn-primary center-block"; } else { return "btn btn-success center-block";}})
 					.attr("value","View Listing")
 					.attr("onClick",function(d){return "showDetails('"+d.contract+"');"});
 		listings.exit().remove();
