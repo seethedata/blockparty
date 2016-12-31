@@ -1,20 +1,10 @@
 {{ define "navbar" }}
 <nav class="navbar navbar-inverse">
 	<div class="container-fluid">
-		<div class="navbar-header">
-			<a id="brand" onClick="showListings();" class="navbar-brand"><span class="glyphicon glyphicon-home"></span> BlockParty</a>
-		</div>
-		<a class="navbar-brand navbar-right" id="myBids" onClick="showMyBids();"> <span class="glyphicon glyphicon glyphicon-list-alt"> MyBids</span></a>
-	  </div>
+		<a id="brand" href="{{.Url}}" class="navbar-brand"><span class="glyphicon glyphicon-home"></span> BlockParty</a>
+		<p class="navbar-text navbar-right text-right">
+			<a id="myBids" href="{{.Url}}/mybids" class="navbar-link"><span class="glyphicon glyphicon glyphicon-list-alt"></span> My Bids</a>
+		</p>
+	</div>
 </nav>	    
-<script>
-	mainUrl={{.Url}};
-	function showListings() {
-    		window.location=mainUrl
-	}
-
-	function showMyBids() {
-    		window.location=mainUrl+"/mybids";
-}
-</script>
-{{end}}
+{{end}
