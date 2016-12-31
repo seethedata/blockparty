@@ -1,15 +1,6 @@
 <!doctype html>
 <html>
-    <head>
-    <link href="/css/bootstrap.min.css" rel="stylesheet"/>
-    <link href="/css/blockparty.css" rel="stylesheet"/>
-    <script type="text/javascript" src="/js/web3.js"></script>
-    <script type="text/javascript" src="/js/jquery.min.js"></script>
-    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="/js/d3.min.js"></script>
-    <script type="text/javascript" src="/js/blockparty.js"></script>
-    <title>BlockParty</title>
-    </head>
+{{template "head"}}
     <body>
 	{{template "navbar" .}}
 	<div class="container-fluid">
@@ -18,7 +9,6 @@
 			<table class="table table-striped">
 			<thead>
 				<tr>
-				<th>User</th>
 				<th>Contract</th>
 				<th>Bid</th>
 				<th>Status</th>
@@ -43,9 +33,6 @@
 	row=table.enter()
 		.append("tr");
 	
-	row
-		.append("td")
-		.text(function(d){return d.user;});
 	row
 		.append("td")
 		.text(function(d){return d.contract;});
