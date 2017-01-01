@@ -5,25 +5,31 @@
 	{{template "navbar" .}}
 	<img alt="Pathfinder Logo" class="center-block" src="images/Pathfinder-Logo.png"/>
 	<div id="listings" class="container-fluid">
-		<div id="houses" class="row">
+		<div id="houses">
 		{{range .Houses}}
 			<div class="col-md-4">
-				<div class="panel {{if eq .Status "sold"}}{{print "panel-primary"}}{{else}}{{print "panel-success"}}{{end}}">
+				<div class="panel {{if eq .Status "sold"}}panel-primary{{else}}panel-success{{end}}">
 					<div class="panel-heading">
 						<h3 class="panel-title">{{.Name}}</h3>
 					</div>
 					<div class="panel-body">
-						<span style="{{if eq .Status "sold"}}{{print "visibility:hidden"}}{{else}}{{print "visibility:visible"}}{{end}}" class="label label-success">For Sale!</span>
+						<span class="label label-success" style="{{if eq .Status "sold"}}visibility:hidden{{else}}visibility:visibile{{end}}">For Sale!</span>
 						<img src="images/{{.Image}}" class="houseImage center-block"/>
 						<div class="text-center">{{.Description}}</div>
 						<div class="text-center">$
 							<script>document.write(parseFloat("{{.Price}}").toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,'));</script>
 						</div>
 						<div>
-							<input type="button" class="btn btn-success center-block" style="{{if eq .Status "sold"}}{{print "display:none"}}{{else}}{{print "display:block"}}{{end}}" value="View Bids" onClick="showBids('{{.Contract}}');"/>
+						{{if eq .Status "sold"}}
+							<input type="button" class="btn btn-primary center-block" value="List House" onClick="listHouse('{{.Contract}}');"/>
+						{{else}}
+							<div class="text-center">
+								<input type="button" class="btn btn-success" value="View Bids" onClick="showBids('{{.Contract}}');"/>
+								<input type="button" class="btn btn-primary" value="Delist House" onClick="delistHouse('{{.Contract}}');"/>
+							</div>
+						{{end}}
 						</div>
 						<div>
-							<input type="button" class="btn btn-primary center-block" style="{{if eq .Status "sold"}}{{print "display:block"}}{{else}}{{print "display:none"}}{{end}}" value="List House" onClick="listHouse('{{.Contract}}');"/>
 						</div>
 					</div>
 				</div>
@@ -38,7 +44,11 @@
 	}
 
     	function listHouse(contract) {
-		alert("Listing house " + contract);
+		window.location={{.Url}} +"/house/" + contract + "/changeStatus/listed";
+	}
+
+    	function delistHouse(contract) {
+		window.location={{.Url}} +"/house/" + contract + "/changeStatus/sold";
 	}
 
     </script>

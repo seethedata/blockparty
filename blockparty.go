@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/leekchan/accounting"
+
 	"github.com/satori/go.uuid"
 	"html/template"
 	"io/ioutil"
@@ -23,7 +24,7 @@ var (
 	pool    *redis.Pool
 	mainURL string
 	store   *sessions.CookieStore = sessions.NewCookieStore([]byte("BlockParty"))
-	ac = accounting.Accounting{Symbol: "$", Precision: 2, Thousand: ",", Decimal: "."}
+	ac                            = accounting.Accounting{Symbol: "$", Precision: 2, Thousand: ",", Decimal: "."}
 )
 
 type cfServices struct {
@@ -61,8 +62,8 @@ type Bid struct {
 
 //JSONPayload is a generic Container to hold JSON
 type JSONPayload struct {
-	Houses    []House `json:"data" redis:"data"`
-	Bids	[]Bid	`json:"bids" redis:"bids"`
+	Houses  []House `json:"data" redis:"data"`
+	Bids    []Bid   `json:"bids" redis:"bids"`
 	User    string  `json:"user" redis:"user"`
 	Url     string  `json:"url" redis:"url"`
 	Message string  `json:"message" redis:"message"`
@@ -142,6 +143,16 @@ func setDefaultHouses() {
 	} else {
 		fmt.Println("Default houses already exist. Skipping house creation.")
 	}
+}
+
+func changeHouseStatus(i string, status string) error {
+	c := pool.Get()
+	defer c.Close()
+
+	h := getHouse(i)
+	_, err := c.Do("HMSET", "house:"+i, "name", h.Name, "address", h.Address, "price",
+		h.Price, "image", h.Image, "contract", i, "description", h.Description, "bedrooms", h.Bedrooms, "bathrooms", h.Bathrooms, "status", status)
+	return err
 }
 
 func initialize() {
@@ -278,7 +289,7 @@ func listingsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	session.Save(r, w)
-	t, err := template.ParseFiles("templates/listings.tmpl", "templates/housePanel.tmpl","templates/head.tmpl", "templates/navbar.tmpl")
+	t, err := template.ParseFiles("templates/listings.tmpl", "templates/housePanel.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
 	listings := newPayload()
 	listings.Houses = getHouses()
@@ -471,6 +482,17 @@ func inspectHandler(w http.ResponseWriter, r *http.Request) {
 	payload.User = u
 	t.Execute(w, payload)
 }
+
+func changeStatusHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	i := vars["contract-id"]
+	status := vars["status"]
+
+	err:= changeHouseStatus(i,status)
+	check("changeHouseStatus", err)
+	http.Redirect(w, r, mainURL + "/realtor",http.StatusFound)
+}
+
 func realtorHandler(w http.ResponseWriter, r *http.Request) {
 	var u string
 	session, err := store.Get(r, "BlockPartySession")
@@ -521,6 +543,7 @@ func main() {
 	router.HandleFunc("/realtor", realtorHandler)
 	router.HandleFunc("/myBids", myBidsHandler)
 	router.HandleFunc("/house/{contract-id}/inspect", inspectHandler)
+	router.HandleFunc("/house/{contract-id}/changeStatus/{status}", changeStatusHandler)
 
 	http.Handle("/images/", http.FileServer(http.Dir("/app")))
 	http.Handle("/css/", http.FileServer(http.Dir("/app")))
