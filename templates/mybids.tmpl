@@ -4,7 +4,7 @@
     <body>
 	{{template "navbar" .}}
 	<div class="container-fluid">
-		<h2 class="text-center" id="title"></h2>
+		<h2 class="text-center" id="title">My Bids</h2>
 		<div id="bidTable">
 			<table class="table table-striped">
 			<thead>
@@ -15,33 +15,21 @@
 				</tr>
 			</thead>
 			<tbody id="tableData">
+			{{range .Bids}}
+				<tr onClick="showMyBid('{{.Contract}}');">
+					<td>{{.Contract}}</td>
+					<td>$<script>document.write(parseFloat("{{.Amount}}").toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,')); </script></td>
+					<td>{{.Status}}</td>
+				</tr>
+			{{end}}
 			</tbody>
 			</table>
 		</div>
 	</div>
     </body>
     <script>
-	mainUrl={{.Url}};
-	user={{.User}};
-	bids={{.Data}};
-
-
-	$("#title").text("My Bids");
-
-	table=d3.select("#tableData").selectAll("tr").data(bids);
-
-	row=table.enter()
-		.append("tr");
-	
-	row
-		.append("td")
-		.text(function(d){return d.contract;});
-	row
-		.append("td")
-		.text(function(d){return "$"+d.amount.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,');});
-	row
-		.append("td")
-		.text(function(d){return d.status});
-
+	function showMyBid(contract) {
+		window.location={{.Url}} + "/house/" + contract + "/myBid";
+	}
     </script>
 </html>

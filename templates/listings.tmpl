@@ -5,72 +5,22 @@
 	{{template "navbar" .}}
 	<img alt="Pathfinder Logo" class="center-block" src="images/Pathfinder-Logo.png"/>
 	<div id="listings" class="container">
-		<div id="houses" class="row"></div>
+		<div id="houses" class="row">
+		{{range .Houses}}
+		{{template "housePanel" .}}
+		{{end}}
+		</div>
 	</div>
     </body>
     <script>
-	var mainUrl={{.Url}};
-	var user={{.User}};
-	var houses={{.Data}};
-
-	function initialize() {
-		var listings=d3.select("#houses").selectAll("div").data(houses);
-	
-		houseDiv=listings.enter()
-			.append("div")
-				.attr("class","col-md-4")
-				.append("div")
-				.attr("class",function(d){if (d.status == 'sold') {return "panel panel-primary";} else { return "panel panel-success";}});
-	
-	
-		houseDivHeading=houseDiv
-				.append("div")
-				.attr("class","panel-heading");
-
-		houseDivHeading
-			.append("h3")
-				.attr("class","panel-title")
-				.text(function(d){return d.name;});
-	
-		var houseDivContent= houseDiv.append("div")
-			.attr("class","panel-body")
-			.append("a")
-				.attr("onClick",function(d){return "showDetails('"+d.contract+"');"});
-	
-		houseDivContent
-			.append("span")
-				.attr("style",function(d){if (d.status == 'sold') {return "visibility:hidden";} else { return "visibility:visible; ";}})
-				.attr("class","label label-success")
-				.text("For Sale!");
-		houseDivContent
-			.append("img")
-			.attr("src", function(d){return "images/" + d.image;})
-			.attr("class","houseImage center-block");
-		
-		houseDivContent
-			.append("div")
-			.attr("class","text-center")
-			.text(function(d){return d.description;});
-	
-		houseDivContent
-			.append("div")
-			.attr("class","text-center")
-			.text(function(d){return '$' + d.price.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,');});
-	
-		houseDivContent
-			.append("div")
-				.append("input")
-					.attr("type","button")
-					.attr("class",function(d){if (d.status == 'sold') {return "btn btn-primary center-block"; } else { return "btn btn-success center-block";}})
-					.attr("value","View Listing")
-					.attr("onClick",function(d){return "showDetails('"+d.contract+"');"});
-		listings.exit().remove();
-	}
+	$(".price").each(function(i){
+		var val=parseFloat($(this).text());
+		$(this).text("$" + val.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,'));
+	});
 
     	function showDetails(contract) {
-    		window.location=mainUrl+"/house/"+contract;
+		window.location={{.Url}}+"/house/"+contract;
 	}
 
-	initialize();
     </script>
 </html>

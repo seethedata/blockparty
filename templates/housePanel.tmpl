@@ -1,0 +1,26 @@
+{{define "housePanel"}}	
+	<div class="col-md-4">
+		<div class="panel {{if eq .Status "sold"}}{{print "panel-primary"}}{{else}}{{print "panel-success"}}{{end}}">
+			<div class="panel-heading">
+				<h3 class="panel-title">{{.Name}}</h3>
+			</div>
+			<div class="panel-body">	
+				<a onClick="showDetails('{{.Contract}}');">
+					<span style="{{if eq .Status "sold"}}{{print "visibility:hidden"}}{{else}}{{print "visibility:visible"}}{{end}}" class="label label-success">
+						For Sale!
+					</span>
+					<img src="images/{{.Image}}" class="houseImage center-block"/>
+					<div class="text-center">{{.Description}}</div>
+					<div class="text-center">$
+					<script>
+						document.write(parseFloat("{{.Price}}").toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,'));
+					</script>
+					</div>
+					<div>
+						<input type="button" class="btn center-block {{if eq .Status "sold"}}{{print "btn-primary"}}{{else}}{{print "btn-success"}}{{end}}" value="View Listing" onClick="showDetails('{{.Contract}}');"/>
+					</div>
+				</a>
+			</div>
+		</div>
+	</div>
+{{end}}

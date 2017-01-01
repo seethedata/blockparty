@@ -8,6 +8,7 @@ import (
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
+	"github.com/leekchan/accounting"
 	"github.com/satori/go.uuid"
 	"html/template"
 	"io/ioutil"
@@ -20,9 +21,9 @@ import (
 
 var (
 	pool    *redis.Pool
-	//mainURL string       = "https://blockparty.local.pcfdev.io"
-	mainURL string       = "https://blockparty.cfapps.io"
+	mainURL string
 	store   *sessions.CookieStore = sessions.NewCookieStore([]byte("BlockParty"))
+	ac = accounting.Accounting{Symbol: "$", Precision: 2, Thousand: ",", Decimal: "."}
 )
 
 type cfServices struct {
@@ -58,18 +59,13 @@ type Bid struct {
 	Status   string  `json:"status" redis:"status"`
 }
 
-type bidPayload struct {
-	Data []Bid  `json:"data" redis:"data"`
-	User string `json:"user" redis:"user"`
-	Url  string `json:"url" redis:"url"`
-}
-
 //JSONPayload is a generic Container to hold JSON
 type JSONPayload struct {
-	Data []House `json:"data" redis:"data"`
-	User string  `json:"user" redis:"user"`
-	Url  string  `json:"url" redis:"url"`
-	Message  string  `json:"message" redis:"message"`
+	Houses    []House `json:"data" redis:"data"`
+	Bids	[]Bid	`json:"bids" redis:"bids"`
+	User    string  `json:"user" redis:"user"`
+	Url     string  `json:"url" redis:"url"`
+	Message string  `json:"message" redis:"message"`
 }
 
 func newPool(addr string, port string, password string) *redis.Pool {
@@ -98,10 +94,6 @@ func check(function string, e error) {
 
 func newPayload() *JSONPayload {
 	return &JSONPayload{Url: mainURL}
-}
-
-func newBidPayload() *bidPayload {
-	return &bidPayload{Url: mainURL}
 }
 
 func getHouses() []House {
@@ -139,7 +131,7 @@ func setDefaultHouses() {
 		err = json.Unmarshal(file, &listings)
 		check("Unmarshal", err)
 
-		for _, v := range listings.Data {
+		for _, v := range listings.Houses {
 			contract := getContractId()
 			_, err := c.Do("SADD", "houses", "house:"+contract)
 			check("LPUSH", err)
@@ -162,6 +154,7 @@ func initialize() {
 	check("Unmarshal", err)
 
 	env, _ := cfenv.Current()
+	mainURL = "https://" + env.ApplicationURIs[0]
 	services := env.Services
 
 	var credentials map[string]interface{}
@@ -253,7 +246,20 @@ func getMyBids(u string) []Bid {
 		}
 	}
 	return myBids
+}
 
+func getMyBid(u string, contract string) Bid {
+	var bids []Bid
+	var myBid Bid
+
+	bids = getBids(contract)
+	for _, b := range bids {
+		if b.User == u {
+			myBid = b
+			break
+		}
+	}
+	return myBid
 }
 
 func listingsHandler(w http.ResponseWriter, r *http.Request) {
@@ -272,11 +278,10 @@ func listingsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	session.Save(r, w)
-	t, err := template.ParseFiles("templates/listings.tmpl", "templates/head.tmpl","templates/navbar.tmpl")
+	t, err := template.ParseFiles("templates/listings.tmpl", "templates/housePanel.tmpl","templates/head.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
 	listings := newPayload()
-	log.Print(listings.Url)
-	listings.Data = getHouses()
+	listings.Houses = getHouses()
 	listings.User = u
 	t.Execute(w, listings)
 }
@@ -300,9 +305,9 @@ func detailsHandler(w http.ResponseWriter, r *http.Request) {
 	h = getHouse(i)
 
 	var payload = newPayload()
-	payload.Data = append(payload.Data, h)
+	payload.Houses = append(payload.Houses, h)
 	payload.User = u
-	t, err := template.ParseFiles("templates/details.tmpl", "templates/head.tmpl","templates/navbar.tmpl")
+	t, err := template.ParseFiles("templates/details.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
 	t.Execute(w, payload)
 }
@@ -319,20 +324,20 @@ func bidsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	u = session.Values["user"].(string)
 
-	p := newBidPayload()
-	p.Data = getBids(i)
-	p.User=u
+	p := newPayload()
+	p.Bids = getBids(i)
+	p.User = u
 
-	t, err := template.ParseFiles("templates/bids.tmpl", "templates/head.tmpl","templates/navbar.tmpl")
+	t, err := template.ParseFiles("templates/bids.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
 	t.Execute(w, p)
 
 }
 
-func bidHandler(w http.ResponseWriter, r *http.Request) {
+func enterBidHandler(w http.ResponseWriter, r *http.Request) {
 	var u string
-	bidExists:=false
-	message:=""
+	bidExists := false
+	message := ""
 	session, err := store.Get(r, "BlockPartySession")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -343,41 +348,39 @@ func bidHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	i := vars["contract-id"]
 	a := r.PostFormValue("bidAmount")
-	a = strings.Replace(a,",","",-1)
-	a = strings.Replace(a,".","",-1)
+	a = strings.Replace(a, ",", "", -1)
+	a = strings.Replace(a, ".", "", -1)
 
 	var h House
 	h = getHouse(i)
 
-
 	c := pool.Get()
 	defer c.Close()
 
-	n:=getBids(i)
+	n := getBids(i)
 
-	for _,v:=range n {
+	for _, v := range n {
 		if v.User == u {
-			bidExists=true
+			bidExists = true
 			break
 		}
 	}
 	if bidExists {
-		message="You have already bid on " + h.Name + "."
+		message = "You have already bid on " + h.Name + "."
 	} else {
-		_, err = c.Do("ZADD", "bids:" + i, a, "{\"user\":\"" + u + "\", \"amount\":" + a + ", \"contract\":\"" + i + "\", \"status\":\"submitted\"}")
+		_, err = c.Do("ZADD", "bids:"+i, a, "{\"user\":\""+u+"\", \"amount\":"+a+", \"contract\":\""+i+"\", \"status\":\"submitted\"}")
 		check("ZADD", err)
-		message="Bid on " + i + " submitted."
+		message = "Bid on " + i + " submitted."
 	}
 	var payload = newPayload()
 	payload.User = u
-	payload.Message=message
-	payload.Data = append(payload.Data, h)
+	payload.Message = message
+	payload.Houses = append(payload.Houses, h)
 
-	t, err := template.ParseFiles("templates/bid.tmpl", "templates/head.tmpl","templates/navbar.tmpl")
+	t, err := template.ParseFiles("templates/bid.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
 	t.Execute(w, payload)
 }
-
 
 func applyHandler(w http.ResponseWriter, r *http.Request) {
 	var u string
@@ -393,10 +396,10 @@ func applyHandler(w http.ResponseWriter, r *http.Request) {
 
 	var h House
 	h = getHouse(i)
-	t, err := template.ParseFiles("templates/apply.tmpl", "templates/head.tmpl","templates/navbar.tmpl")
+	t, err := template.ParseFiles("templates/apply.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
 	var payload = newPayload()
-	payload.Data = append(payload.Data, h)
+	payload.Houses = append(payload.Houses, h)
 	payload.User = u
 	t.Execute(w, payload)
 }
@@ -415,14 +418,59 @@ func mortgageHandler(w http.ResponseWriter, r *http.Request) {
 
 	var h House
 	h = getHouse(i)
-	t, err := template.ParseFiles("templates/mortgage.tmpl", "templates/head.tmpl","templates/navbar.tmpl")
+	t, err := template.ParseFiles("templates/mortgage.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
 	var payload = newPayload()
-	payload.Data = append(payload.Data, h)
+	payload.Houses = append(payload.Houses, h)
 	payload.User = u
 	t.Execute(w, payload)
 }
 
+func myBidHandler(w http.ResponseWriter, r *http.Request) {
+	var u string
+
+	session, err := store.Get(r, "BlockPartySession")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	u = session.Values["user"].(string)
+
+	vars := mux.Vars(r)
+	i := vars["contract-id"]
+	myBid := getMyBid(u, i)
+	house := getHouse(i)
+
+	t, err := template.ParseFiles("templates/mybid.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
+	check("Parse template", err)
+	var payload = newPayload()
+	payload.Houses = append(payload.Houses, house)
+	payload.User = u
+	payload.Bids = append(payload.Bids, myBid)
+	t.Execute(w, payload)
+}
+
+func inspectHandler(w http.ResponseWriter, r *http.Request) {
+	var u string
+	session, err := store.Get(r, "BlockPartySession")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	u = session.Values["user"].(string)
+
+	vars := mux.Vars(r)
+	i := vars["contract-id"]
+
+	var h House
+	h = getHouse(i)
+	t, err := template.ParseFiles("templates/inspect.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
+	check("Parse template", err)
+	var payload = newPayload()
+	payload.Houses = append(payload.Houses, h)
+	payload.User = u
+	t.Execute(w, payload)
+}
 func realtorHandler(w http.ResponseWriter, r *http.Request) {
 	var u string
 	session, err := store.Get(r, "BlockPartySession")
@@ -432,10 +480,10 @@ func realtorHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	u = session.Values["user"].(string)
 
-	t, err := template.ParseFiles("templates/realtor.tmpl", "templates/head.tmpl","templates/navbar.tmpl")
+	t, err := template.ParseFiles("templates/realtor.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
 	var payload = newPayload()
-	payload.Data = getHouses()
+	payload.Houses = getHouses()
 	payload.User = u
 	t.Execute(w, payload)
 }
@@ -451,11 +499,11 @@ func myBidsHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Print("User from form is : " + u)
 	myBids := getMyBids(u)
-	var payload = newBidPayload()
-	payload.Data = myBids
+	var payload = newPayload()
+	payload.Bids = myBids
 	payload.User = u
 
-	t, err := template.ParseFiles("templates/mybids.tmpl", "templates/head.tmpl","templates/navbar.tmpl")
+	t, err := template.ParseFiles("templates/mybids.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
 	t.Execute(w, payload)
 }
@@ -465,12 +513,14 @@ func main() {
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", listingsHandler)
 	router.HandleFunc("/house/{contract-id}", detailsHandler)
-	router.HandleFunc("/house/{contract-id}/bid", bidHandler)
+	router.HandleFunc("/house/{contract-id}/enterBid", enterBidHandler)
+	router.HandleFunc("/house/{contract-id}/myBid", myBidHandler)
 	router.HandleFunc("/house/{contract-id}/bids", bidsHandler)
 	router.HandleFunc("/house/{contract-id}/applyForMortgage", applyHandler)
 	router.HandleFunc("/house/{contract-id}/mortgage", mortgageHandler)
 	router.HandleFunc("/realtor", realtorHandler)
-	router.HandleFunc("/mybids", myBidsHandler)
+	router.HandleFunc("/myBids", myBidsHandler)
+	router.HandleFunc("/house/{contract-id}/inspect", inspectHandler)
 
 	http.Handle("/images/", http.FileServer(http.Dir("/app")))
 	http.Handle("/css/", http.FileServer(http.Dir("/app")))

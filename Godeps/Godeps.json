@@ -39,6 +39,11 @@
 			"Rev": "83c8db3bdc9be789e57e3756ffbcffd2d7d40176"
 		},
 		{
+			"ImportPath": "github.com/leekchan/accounting",
+			"Comment": "v0.2",
+			"Rev": "a35854c075934d6aa1a6c1ab3ea8a82ee0dc1a93"
+		},
+		{
 			"ImportPath": "github.com/mitchellh/mapstructure",
 			"Rev": "bfdb1a85537d60bc7e954e600c250219ea497417"
 		},

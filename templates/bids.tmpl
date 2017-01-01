@@ -4,67 +4,33 @@
     <body>
 	{{template "navbar" .}}
 	<div class="container-fluid">
-		<h2 class="text-center" id="title"></h2>
+		<h2 class="text-center" id="title">Bids</h2>
 		<div id="bidTable">
 			<table class="table table-striped">
 			<thead>
 				<tr>
-				<th>User</th>
-				<th>Contract</th>
-				<th>Bid</th>
-				<th colspan="3" class="text-center">Action</th>
+					<th>User</th>
+					<th>Contract</th>
+					<th>Bid</th>
+					<th colspan="2" class="text-center">Action</th>
 				</tr>
 			</thead>
 			<tbody id="tableData">
+			{{range .Bids}}
+				<tr>
+					<td>{{.User}}</td>
+					<td>{{.Contract}}</td>
+					<td>$<script>document.write(parseFloat("{{.Amount}}").toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,')); </script></td>
+						<td><input type="button" class="btn btn-success center-block" value="Accept" onClick="acceptBid('{{.User}}','{{.Contract}}');"/></td>
+						<td><input type="button" class="btn btn-danger center-block" value="Reject" onClick="rejectBid('{{.User}}','{{.Contract}}');"/></td>
+				</tr>
+			{{end}}
 			</tbody>
 			</table>
 		</div>
 	</div>
     </body>
     <script>
-	mainUrl={{.Url}};
-	bids={{.Data}};
-
-
-	$("#title").text("Bids" );
-
-	table=d3.select("#tableData").selectAll("tr").data(bids);
-
-	row=table.enter()
-		.append("tr");
-	
-	row
-		.append("td")
-		.text(function(d){return d.user;});
-	row
-		.append("td")
-		.text(function(d){return d.contract;});
-	row
-		.append("td")
-		.text(function(d){return "$"+d.amount.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,');});
-	row
-		.append("td")
-			.append("input")
-				.attr("type","button")
-				.attr("class","btn btn-success center-block")
-				.attr("value","Accept")
-				.attr("onClick",function(d){return "acceptBid('" + d.user + "','" + d.contract + "');"});
-	row
-		.append("td")
-			.append("input")
-				.attr("type","button")
-				.attr("class","btn btn-danger center-block")
-				.attr("value","Reject")
-				.attr("onClick",function(d){return "rejectBid('" + d.user + "','" + d.contract + "');"});
-
-	row
-		.append("td")
-			.append("input")
-				.attr("type","button")
-				.attr("class","btn btn-primary center-block")
-				.attr("value","View Mortgage")
-				.attr("onClick",function(d){return "viewMortgage('" + d.contract + "');"});
-
 	function acceptBid(user,contract) {
 		alert("Accepting bid from user " + user + " for contract " + contract + ".");
 	}
@@ -72,8 +38,5 @@
 		alert("Rejecting bid from user " + user + " for contract " + contract + ".");
 	}
 
-	function viewMortgage(contract) {
-    		window.location=mainUrl + "/house/" + contract +"/mortgage";
-	}
     </script>
 </html>
