@@ -9,7 +9,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/leekchan/accounting"
-
 	"github.com/satori/go.uuid"
 	"html/template"
 	"io/ioutil"
@@ -58,6 +57,10 @@ type Bid struct {
 	Amount   float64 `json:"amount" redis:"amount"`
 	Contract string  `json:"contract" redis:"contract"`
 	Status   string  `json:"status" redis:"status"`
+}
+
+func (b Bid) getKey() string {
+	return "bid:" + b.Contract +  ":" + b.User
 }
 
 //JSONPayload is a generic Container to hold JSON
@@ -226,51 +229,47 @@ func getHouse(id string) House {
 	return h
 }
 
-func getBids(i string) []Bid {
-	var bids []Bid = make([]Bid, 0)
+func getBid(id string) Bid {
+	var bid Bid
 	c := pool.Get()
 	defer c.Close()
-	n, err := redis.Values(c.Do("ZREVRANGEBYSCORE", "bids:"+i, "+inf", "-inf"))
-	check("ZREVRANGEBYSCORE", err)
 
-	for _, v := range n {
-		var bid Bid
-		err = json.Unmarshal(v.([]byte), &bid)
-		check("Unmarshal", err)
-		bids = append(bids, bid)
+	n, err := redis.Values(c.Do("HGETALL", id))
+	check("HGETALL", err)
+	err = redis.ScanStruct(n, &bid)
+	check("ScanStruct", err)
+	return bid
+}
+
+func getBids(filter string) []Bid {
+	var bids []Bid = make([]Bid, 0)
+	var bidKeys []string
+
+	c := pool.Get()
+	defer c.Close()
+
+	log.Print("bid:" + filter)
+	bidKeys, err := redis.Strings(c.Do("KEYS","bid:" + filter))
+	check("Strings", err)
+
+	for _, v := range bidKeys {
+		bids = append(bids, getBid(v))
 	}
+
 	return bids
 }
 
-func getMyBids(u string) []Bid {
-	var bids []Bid = make([]Bid, 0)
-	var myBids []Bid = make([]Bid, 0)
-	var houses []House
-	houses = getHouses()
-
-	for _, h := range houses {
-		bids = getBids(h.Contract)
-		for _, b := range bids {
-			if b.User == u {
-				myBids = append(myBids, b)
-			}
-		}
-	}
-	return myBids
+func getHouseBids(i string) []Bid {
+	return getBids(i+":*")
 }
 
-func getMyBid(u string, contract string) Bid {
-	var bids []Bid
-	var myBid Bid
+func getMyBids(u string) []Bid {
+	return getBids("*:"+u)
+}
 
-	bids = getBids(contract)
-	for _, b := range bids {
-		if b.User == u {
-			myBid = b
-			break
-		}
-	}
-	return myBid
+func getMyBid(i string, u string) Bid {
+	return getBid("bid:" + i + ":" + u)
+
 }
 
 func listingsHandler(w http.ResponseWriter, r *http.Request) {
@@ -336,7 +335,7 @@ func bidsHandler(w http.ResponseWriter, r *http.Request) {
 	u = session.Values["user"].(string)
 
 	p := newPayload()
-	p.Bids = getBids(i)
+	p.Bids = getHouseBids(i)
 	p.User = u
 
 	t, err := template.ParseFiles("templates/bids.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
@@ -347,7 +346,6 @@ func bidsHandler(w http.ResponseWriter, r *http.Request) {
 
 func enterBidHandler(w http.ResponseWriter, r *http.Request) {
 	var u string
-	bidExists := false
 	message := ""
 	session, err := store.Get(r, "BlockPartySession")
 	if err != nil {
@@ -368,21 +366,12 @@ func enterBidHandler(w http.ResponseWriter, r *http.Request) {
 	c := pool.Get()
 	defer c.Close()
 
-	n := getBids(i)
+	key := "bid:" + i + ":" + u
 
-	for _, v := range n {
-		if v.User == u {
-			bidExists = true
-			break
-		}
-	}
-	if bidExists {
-		message = "You have already bid on " + h.Name + "."
-	} else {
-		_, err = c.Do("ZADD", "bids:"+i, a, "{\"user\":\""+u+"\", \"amount\":"+a+", \"contract\":\""+i+"\", \"status\":\"submitted\"}")
-		check("ZADD", err)
-		message = "Bid on " + i + " submitted."
-	}
+	_, err = c.Do("HMSET", key, "user", u, "amount", a, "contract", i, "status", "submitted")
+	check("HMSET", err)
+	message = "Bid on " + h.Name + " submitted."
+
 	var payload = newPayload()
 	payload.User = u
 	payload.Message = message
@@ -449,7 +438,7 @@ func myBidHandler(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	i := vars["contract-id"]
-	myBid := getMyBid(u, i)
+	myBid := getMyBid(i,u)
 	house := getHouse(i)
 
 	t, err := template.ParseFiles("templates/mybid.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
@@ -488,9 +477,9 @@ func changeStatusHandler(w http.ResponseWriter, r *http.Request) {
 	i := vars["contract-id"]
 	status := vars["status"]
 
-	err:= changeHouseStatus(i,status)
+	err := changeHouseStatus(i, status)
 	check("changeHouseStatus", err)
-	http.Redirect(w, r, mainURL + "/realtor",http.StatusFound)
+	http.Redirect(w, r, mainURL+"/realtor", http.StatusFound)
 }
 
 func realtorHandler(w http.ResponseWriter, r *http.Request) {
@@ -519,7 +508,6 @@ func myBidsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	u = session.Values["user"].(string)
 
-	log.Print("User from form is : " + u)
 	myBids := getMyBids(u)
 	var payload = newPayload()
 	payload.Bids = myBids
