@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+{{template "head"}}
+    <body>
+	{{template "navbar" .}}
+	<div class="container-fluid">
+		{{range .Houses}}
+		<h2 class="text-center" id="message">Schedule Inspection for {{.Name}}</h2>
+		<input type="button" class="btn btn-primary" value="Schedule Inspection"/ onClick="schedule('{{.Id}}');">
+		{{end}}
+	</div>
+    </body>
+    <script>
+	mainUrl={{.Url}};
+
+	function schedule(i) {
+		window.location={{.Url}} + "/house/" + i + "/scheduleInspection";
+	}	
+    </script>
+</html>

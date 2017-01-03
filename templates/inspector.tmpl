@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+{{template "head"}}
+    <body>
+	{{template "navbar" .}}
+	<div class="container-fluid">
+		<h2 class="text-center" id="title">Scheduled Inspections</h2>
+		<div id="bidTable">
+			<table class="table table-striped">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>House Id</th>
+					<th>Action</th>
+				</tr>
+			</thead>
+			<tbody id="tableData">
+			{{range .Houses}}
+				<tr>
+					<td>{{.Name}}</td>
+					<td>{{.Id}}</td>
+					<td><input type="button" class="btn btn-success center-block" value="Inspect" onClick="inspect('{{.Id}}');"/></td>
+				</tr>
+			{{end}}
+			</tbody>
+			</table>
+		</div>
+	</div>
+    </body>
+    <script>
+	function inspect(i) {
+		window.location={{.Url}} + "/house/" + i + "/inspect";
+	}
+    </script>
+</html>

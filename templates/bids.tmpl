@@ -10,7 +10,7 @@
 			<thead>
 				<tr>
 					<th>User</th>
-					<th>Contract</th>
+					<th>House Id</th>
 					<th>Bid</th>
 					<th colspan="2" class="text-center">Action</th>
 				</tr>
@@ -19,10 +19,14 @@
 			{{range .Bids}}
 				<tr>
 					<td>{{.User}}</td>
-					<td>{{.Contract}}</td>
-					<td>$<script>document.write(parseFloat("{{.Amount}}").toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,')); </script></td>
-						<td><input type="button" class="btn btn-success center-block" value="Accept" onClick="acceptBid('{{.User}}','{{.Contract}}');"/></td>
-						<td><input type="button" class="btn btn-danger center-block" value="Reject" onClick="rejectBid('{{.User}}','{{.Contract}}');"/></td>
+					<td>{{.HouseId}}</td>
+					<td>$<script>document.write(({{.Amount}}).toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,')); </script></td>
+					{{if eq .Status "Submitted"}}
+					<td><input type="button" class="btn btn-success center-block" value="Accept" onClick="changeBidStatus('{{.User}}','{{.HouseId}}','Accepted');"/></td>
+					<td><input type="button" class="btn btn-danger center-block" value="Reject" onClick="changeBidStatus('{{.User}}','{{.HouseId}}','Rejected');"/></td>
+					{{else}}
+						<td style="color:#9A9A9A" class="text-center" colspan="2">{{.Status}}</td>
+					{{end}}
 				</tr>
 			{{end}}
 			</tbody>
@@ -31,12 +35,8 @@
 	</div>
     </body>
     <script>
-	function acceptBid(user,contract) {
-		alert("Accepting bid from user " + user + " for contract " + contract + ".");
+	function changeBidStatus(user,houseId,status) {
+		window.location={{.Url}} + "/house/" + houseId + "/bid/" + user + "/changeStatus/" + status;
 	}
-	function rejectBid(user,contract) {
-		alert("Rejecting bid from user " + user + " for contract " + contract + ".");
-	}
-
     </script>
 </html>

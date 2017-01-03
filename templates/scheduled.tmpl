@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+{{template "head"}}
+    <body>
+	 {{template "navbar" .}}
+	<div class="container-fluid">
+		{{range .Houses}}
+		<h4 class="text-center" id="message">Inspection Scheduled for {{.Name}}</h4>
+	{{end}}
+		<div class="well">
+			<div class="text-center">
+			<input id="return" type="button" class="btn btn-primary" value="Return to Listings" onClick="returnToListings();"/>
+			</div>
+		</div>
+	</div>
+    </body>
+    <script>
+	function returnToListings() {
+		window.location={{.Url}}
+	}
+    </script>
+</html>

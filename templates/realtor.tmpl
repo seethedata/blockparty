@@ -21,11 +21,11 @@
 						</div>
 						<div>
 						{{if eq .Status "sold"}}
-							<input type="button" class="btn btn-primary center-block" value="List House" onClick="listHouse('{{.Contract}}');"/>
+							<input type="button" class="btn btn-primary center-block" value="List House" onClick="listHouse('{{.Id}}');"/>
 						{{else}}
 							<div class="text-center">
-								<input type="button" class="btn btn-success" value="View Bids" onClick="showBids('{{.Contract}}');"/>
-								<input type="button" class="btn btn-primary" value="Delist House" onClick="delistHouse('{{.Contract}}');"/>
+								<input type="button" class="btn btn-success" value="View Bids" onClick="showBids('{{.Id}}');"/>
+								<input type="button" class="btn btn-primary" value="Delist House" onClick="delistHouse('{{.Id}}');"/>
 							</div>
 						{{end}}
 						</div>
@@ -39,16 +39,16 @@
 	</div>
     </body>
     <script>
-    	function showBids(contract) {
-		window.location={{.Url}} +"/house/" + contract + "/bids";
+    	function showBids(id) {
+		window.location={{.Url}} +"/house/" + id + "/bids";
 	}
 
-    	function listHouse(contract) {
-		window.location={{.Url}} +"/house/" + contract + "/changeStatus/listed";
+    	function listHouse(id) {
+		window.location={{.Url}} +"/house/" + id + "/changeStatus/listed";
 	}
 
-    	function delistHouse(contract) {
-		window.location={{.Url}} +"/house/" + contract + "/changeStatus/sold";
+    	function delistHouse(id) {
+		window.location={{.Url}} +"/house/" + id + "/changeStatus/sold";
 	}
 
     </script>

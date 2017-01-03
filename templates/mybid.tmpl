@@ -8,20 +8,59 @@
 			<img alt="house image" src="/images/{{range .Houses}}{{.Image}}{{end}}" id="houseImage" class="houseImage center-block" onClick="showUser();"/>
 		</div>
 		<h2 id="message" class="text-center"></h2>
+		<div class="well" id="buttons" style="display:none">
+			<div class="text-center">
+			{{range .Bids}}
+				<input id="apply" type="button" class="btn btn-primary" style="display:none" value="Apply for Mortgage" onClick="applyForMortgage({{.HouseId}});"/>
+			{{end}}
+				<input id="return" type="button" class="btn btn-primary" value="Return to Listings" onClick="returnToListings();"/>
+			</div>
+		</div>
 	</div>
     </body>
     <script>
-	status={{range .Bids}}{{.Status}}{{end}}
-	amount={{range .Bids}}{{.Amount}}{{end}}
+	mainUrl={{.Url}};
 
-	if (status == "accepted") {
-		message="Congratulations! Your bid has been accepted!";
-	} else if (status == "rejected") {
-		message="The seller has accepted another bid.";
-	} else {
-		message="You have bid $" + amount.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,') + " for this house.";
+	{{range .Bids}}
+	function updateStatus(){
+		$.getJSON(mainUrl + "/house/" + {{ .HouseId }} + "/bid/" + {{.User}} + "/checkStatus",handleStatus);
+	}
+
+	function setMessage(s) {
+		if (s == "Accepted") {
+			message="Congratulations! Your bid has been accepted!";
+			$("#buttons").toggle();
+			$("#apply").toggle();
+		} else if (s == "Rejected") {
+			message="The seller has accepted another bid.";
+			$("#buttons").toggle();
+		} else {
+			message="You have bid $" + ({{.Amount}}).toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,') + " for this house.";
+		}
+		$("#message").html(message);
+	}
+
+	setMessage({{.Status}});
+
+	{{end}}
+
+	function handleStatus(data) {
+		s=data.status;
+		setMessage(s);
+		if (s != "Submitted") {
+			clearInterval(interval);
+		}
+	}
+
+	interval=setInterval(updateStatus,5000);
+
+	function applyForMortgage(i) {
+    		window.location=mainUrl + "/house/" + i + "/applyForMortgage";
+	}
+
+	function returnToListings() {
+    		window.location=mainUrl;
 	}
 	
-	$("#message").text(message);
     </script>
 </html>
