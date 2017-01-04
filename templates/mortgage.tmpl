@@ -5,18 +5,18 @@
 	{{template "navbar" .}}
 	<div class="container-fluid">
 		{{range .Houses}}
-		<h2 class="text-center" id="message">Mortgage Information for {{.Name}})</h2>
+		<h2 class="text-center" id="message">Mortgage Information for {{.Name}}</h2>
 		<div class="well" id="buttons" >
 			<div class="text-center">
-				<input id="inspect" type="button" class="btn btn-primary" value="Record Inspection" onClick="inspect('{{.Id}}');"/>
+				<input id="inspect" type="button" class="btn btn-primary" value="Schedule Inspection" onClick="scheduleInspection('{{.Id}}');"/>
 			</div>
 		</div>
 		{{end}}
 	</div>
     </body>
     <script>
-	function inspect(i) {
-		window.location={{.Url}} + "/house/" + i + "/inspect";
+	function scheduleInspection(i) {
+		window.location={{.Url}} + "/house/" + i + "/scheduleInspection";
 	}
     </script>
 </html>

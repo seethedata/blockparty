@@ -11,7 +11,7 @@
 				<tr>
 					<th>Name</th>
 					<th>House Id</th>
-					<th>Action</th>
+					<th>Rating</th>
 				</tr>
 			</thead>
 			<tbody id="tableData">
@@ -19,7 +19,11 @@
 				<tr>
 					<td>{{.Name}}</td>
 					<td>{{.Id}}</td>
+					{{if eq .Quality 0}}
 					<td><input type="button" class="btn btn-success center-block" value="Inspect" onClick="inspect('{{.Id}}');"/></td>
+					{{else}}
+						<td style="color:#9A9A9A" class="text-center"><script>document.write(setRating('{{.Quality}}'));</script></td>
+					{{end}}
 				</tr>
 			{{end}}
 			</tbody>
@@ -30,6 +34,25 @@
     <script>
 	function inspect(i) {
 		window.location={{.Url}} + "/house/" + i + "/inspect";
+	}
+
+	function setRating(q) {
+		var ret="";
+		if (q == "1") {
+			ret="Very Poor";
+		} else if (q == "2") {
+			ret="Poor";
+		} else if (q == "3") {
+			ret="Fair";
+		} else if (q == "4") {
+			ret="Good";
+		} else if (q == "5") {
+			ret="Excellent";
+		}
+		return ret;
+	}
+    </script>
+</html>
 	}
     </script>
 </html>

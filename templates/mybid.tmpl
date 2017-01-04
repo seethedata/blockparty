@@ -10,9 +10,9 @@
 		<h2 id="message" class="text-center"></h2>
 		<div class="well" id="buttons" style="display:none">
 			<div class="text-center">
-			{{range .Bids}}
+		{{range .Bids}}
 				<input id="apply" type="button" class="btn btn-primary" style="display:none" value="Apply for Mortgage" onClick="applyForMortgage({{.HouseId}});"/>
-			{{end}}
+		{{end}}
 				<input id="return" type="button" class="btn btn-primary" value="Return to Listings" onClick="returnToListings();"/>
 			</div>
 		</div>
@@ -29,11 +29,11 @@
 	function setMessage(s) {
 		if (s == "Accepted") {
 			message="Congratulations! Your bid has been accepted!";
-			$("#buttons").toggle();
-			$("#apply").toggle();
+			$("#buttons").show();
+			$("#apply").show();
 		} else if (s == "Rejected") {
 			message="The seller has accepted another bid.";
-			$("#buttons").toggle();
+			$("#buttons").show();
 		} else {
 			message="You have bid $" + ({{.Amount}}).toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,') + " for this house.";
 		}

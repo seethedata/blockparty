@@ -42,6 +42,7 @@ type cfService struct {
 type House struct {
 	Id          string  `json:"id" redis:"id"`
 	Name        string  `json:"name" redis:"name"`
+	Owner       string  `json:"owner" redis:"owner"`
 	Address     string  `json:"address" redis:"address"`
 	Price       float64 `json:"price" redis:"price"`
 	Image       string  `json:"image" redis:"image"`
@@ -66,6 +67,17 @@ type Bid struct {
 	Status  string  `json:"status" redis:"status"`
 }
 
+type Mortgage struct {
+	User    string  `json:"user" redis:"user"`
+	Amount  float64 `json:"amount" redis:"amount"`
+	HouseId string  `json:"houseId" redis:"houseId"`
+	Status  string  `json:"status" redis:"status"`
+}
+
+func (m Mortgage) getKey() string {
+	return "mortgage:" + m.HouseId + ":" + m.User
+}
+
 func (b Bid) getKey() string {
 	return "bid:" + b.HouseId + ":" + b.User
 }
@@ -74,6 +86,7 @@ func (b Bid) getKey() string {
 type Payload struct {
 	Houses  []House `json:"data" redis:"data"`
 	Bids    []Bid   `json:"bids" redis:"bids"`
+	Mortgages    []Mortgage   `json:"mortgages" redis:"mortgages"`
 	User    string  `json:"user" redis:"user"`
 	Url     string  `json:"url" redis:"url"`
 	Message string  `json:"message" redis:"message"`
@@ -196,6 +209,16 @@ func rejectOtherBids(i string, u string) error {
 	return err
 
 }
+
+func changeMortgageStatus(i string, u string, status string) error {
+	c := pool.Get()
+	defer c.Close()
+
+	key := "mortgage:" + i + ":" + u
+	_, err := c.Do("HSET", key, "status", status)
+	return err
+}
+
 func initialize() {
 	var cfServices cfServices
 	fmt.Println("Starting")
@@ -285,7 +308,6 @@ func getBid(id string) Bid {
 
 func getBids(filter string) []Bid {
 	var bids []Bid = make([]Bid, 0)
-	var bidKeys []string
 
 	c := pool.Get()
 	defer c.Close()
@@ -311,6 +333,38 @@ func getMyBids(u string) []Bid {
 func getMyBid(i string, u string) Bid {
 	return getBid("bid:" + i + ":" + u)
 
+}
+
+func getMortgage(id string) Mortgage {
+	var mortgage Mortgage
+	c := pool.Get()
+	defer c.Close()
+
+	n, err := redis.Values(c.Do("HGETALL", id))
+	check("HGETALL", err)
+	err = redis.ScanStruct(n, &mortgage)
+	check("ScanStruct", err)
+	return mortgage
+}
+
+func getMortgages(filter string) []Mortgage{
+	var mortgages []Mortgage = make([]Mortgage, 0)
+
+	c := pool.Get()
+	defer c.Close()
+
+	mortgageKeys, err := redis.Strings(c.Do("KEYS", "mortgage:"+filter))
+	check("Strings", err)
+
+	for _, v := range mortgageKeys {
+		mortgages = append(mortgages, getMortgage(v))
+	}
+
+	return mortgages
+}
+
+func getMyMortgages(u string) []Mortgage {
+	return getMortgages("*:" + u)
 }
 
 func listingsHandler(w http.ResponseWriter, r *http.Request) {
@@ -422,6 +476,31 @@ func enterBidHandler(w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, payload)
 }
 
+func enterMortgageHandler(w http.ResponseWriter, r *http.Request) {
+	var u string
+	session, err := store.Get(r, "BlockPartySession")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	u = session.Values["user"].(string)
+
+	vars := mux.Vars(r)
+	i := vars["houseId"]
+	a := r.PostFormValue("amount")
+	a = strings.Replace(a, ",", "", -1)
+	a = strings.Replace(a, ".", "", -1)
+
+	c := pool.Get()
+	defer c.Close()
+
+	key := "mortgage:" + i + ":" + u
+
+	_, err = c.Do("HMSET", key, "user", u, "amount", a, "houseId", i, "status", "Submitted")
+	check("HMSET", err)
+	http.Redirect(w, r, mainURL+"/myMortgages", http.StatusFound)
+}
+
 func applyHandler(w http.ResponseWriter, r *http.Request) {
 	var u string
 	session, err := store.Get(r, "BlockPartySession")
@@ -481,7 +560,7 @@ func myBidHandler(w http.ResponseWriter, r *http.Request) {
 	myBid := getMyBid(i, u)
 	house := getHouse(i)
 
-	t, err := template.ParseFiles("templates/mybid.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
+	t, err := template.ParseFiles("templates/myBid.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
 	var payload = newPayload()
 	payload.Houses = append(payload.Houses, house)
@@ -508,6 +587,23 @@ func inspectHandler(w http.ResponseWriter, r *http.Request) {
 	check("Parse template", err)
 	var payload = newPayload()
 	payload.Houses = append(payload.Houses, h)
+	payload.User = u
+	t.Execute(w, payload)
+}
+
+func lenderHandler(w http.ResponseWriter, r *http.Request) {
+	var u string
+	session, err := store.Get(r, "BlockPartySession")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	u = session.Values["user"].(string)
+
+	t, err := template.ParseFiles("templates/lender.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
+	check("Parse template", err)
+	var payload = newPayload()
+	payload.Mortgages= getMortgages("*")
 	payload.User = u
 	t.Execute(w, payload)
 }
@@ -573,6 +669,18 @@ func changeBidStatusHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, mainURL+"/realtor", http.StatusFound)
 }
 
+func changeMortgageStatusHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	i := vars["houseId"]
+	u := vars["user"]
+	s := vars["status"]
+
+	err := changeMortgageStatus(i, u, s)
+	check("changeMortgageStatus", err)
+
+	http.Redirect(w, r, mainURL+"/lender", http.StatusFound)
+}
+
 func checkBidStatusHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	i := vars["houseId"]
@@ -581,6 +689,19 @@ func checkBidStatusHandler(w http.ResponseWriter, r *http.Request) {
 	key := "bid:" + i + ":" + u
 	bid := getBid(key)
 	response, err := json.Marshal(bid)
+	check("Marshal", err)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(response)
+}
+
+func checkMortgageStatusHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	i := vars["houseId"]
+	u := vars["user"]
+
+	key := "mortgage" + i + ":" + u
+	mortgage := getMortgage(key)
+	response, err := json.Marshal(mortgage)
 	check("Marshal", err)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(response)
@@ -637,47 +758,68 @@ func myBidsHandler(w http.ResponseWriter, r *http.Request) {
 	payload.Bids = myBids
 	payload.User = u
 
-	t, err := template.ParseFiles("templates/mybids.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
+	t, err := template.ParseFiles("templates/myBids.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
+	check("Parse template", err)
+	t.Execute(w, payload)
+}
+
+func myMortgagesHandler(w http.ResponseWriter, r *http.Request) {
+	var u string
+	session, err := store.Get(r, "BlockPartySession")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	u = session.Values["user"].(string)
+
+	myMortgages := getMyMortgages(u)
+	var payload = newPayload()
+	payload.Mortgages = myMortgages
+	payload.User = u
+
+	t, err := template.ParseFiles("templates/myMortgages.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
 	t.Execute(w, payload)
 }
 
 func resetHandler(w http.ResponseWriter, r *http.Request) {
+	var keys []string=make([]string,0)
+	keys=append(keys,"house:","bid:","mortgage:")
+
 	c := pool.Get()
 	defer c.Close()
 
-	n, err := redis.Strings(c.Do("KEYS", "house:*"))
-	check("Keys", err)
-
-	for _, v := range n {
-		_, err := c.Do("DEL", v)
-		check("DEL", err)
-	}
-
-	n, err = redis.Strings(c.Do("KEYS", "bid:*"))
-	check("Keys", err)
-
-	for _, v := range n {
-		_, err := c.Do("DEL", v)
-		check("DEL", err)
+	for _,k:=range keys {
+		n, err := redis.Strings(c.Do("KEYS",k + "*")) 
+		check("Keys", err)
+		for _, v := range n {
+			_, err := c.Do("DEL", v)
+			check("DEL", err)
+		}
 	}
 
 	setDefaultHouses()
 	http.Redirect(w, r, mainURL, http.StatusFound)
 }
+
 func main() {
 	initialize()
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", listingsHandler)
 	router.HandleFunc("/realtor", realtorHandler)
-	router.HandleFunc("/myBids", myBidsHandler)
 	router.HandleFunc("/house/{houseId}", detailsHandler)
 	router.HandleFunc("/house/{houseId}/enterBid", enterBidHandler)
 	router.HandleFunc("/house/{houseId}/myBid", myBidHandler)
+	router.HandleFunc("/myBids", myBidsHandler)
 	router.HandleFunc("/house/{houseId}/bids", bidsHandler)
+	router.HandleFunc("/lender", lenderHandler)
 	router.HandleFunc("/house/{houseId}/applyForMortgage", applyHandler)
+	router.HandleFunc("/house/{houseId}/enterMortgage", enterMortgageHandler)
 	router.HandleFunc("/house/{houseId}/mortgage", mortgageHandler)
+	router.HandleFunc("/house/{houseId}/mortgage/{user}/changeStatus/{status}", changeMortgageStatusHandler)
+	router.HandleFunc("/house/{houseId}/mortgage/{user}/checkStatus", checkMortgageStatusHandler)
 	router.HandleFunc("/house/{houseId}/inspect", inspectHandler)
+	router.HandleFunc("/myMortgages", myMortgagesHandler)
 	router.HandleFunc("/inspector", inspectorHandler)
 	router.HandleFunc("/house/{houseId}/scheduleInspection", scheduleInspectionHandler)
 	router.HandleFunc("/house/{houseId}/changeStatus/{status}", changeHouseStatusHandler)

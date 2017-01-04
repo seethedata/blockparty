@@ -1,10 +1,19 @@
 {{ define "navbar" }}
 <nav class="navbar navbar-inverse">
 	<div class="container-fluid">
-		<a id="brand" href="{{.Url}}" class="navbar-brand"><span class="glyphicon glyphicon-home"></span> BlockParty</a>
-		<p class="navbar-text navbar-right text-right">
-			<a id="myBids" href="{{.Url}}/myBids" class="navbar-link"><span class="glyphicon glyphicon glyphicon-list-alt"></span> My Bids</a>
-		</p>
+		<div class="navbar-header">
+      			<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#myLists" aria-expanded="false">
+        			<span class="sr-only">Toggle navigation</span>
+        			<span class="icon-bar"></span>
+        			<span class="icon-bar"></span>
+        			<span class="icon-bar"></span>
+      			</button>
+			<a id="brand" href="{{.Url}}" class="navbar-brand"><span class="glyphicon glyphicon-home"></span> BlockParty</a>
+      		</div>
+		<div class="collapse navbar-collapse navbar-right" id="myLists">
+					<a id="myBids" href="{{.Url}}/myBids" class="navbar-brand"><span class="glyphicon glyphicon glyphicon-list-alt"></span> My Bids</a>
+					<a id="myMortgages" href="{{.Url}}/myMortgages" class="navbar-brand"> <span class="glyphicon glyphicon glyphicon-piggy-bank"></span> My Mortgages</a>
+		</div>
 	</div>
 </nav>	    
 {{end}}

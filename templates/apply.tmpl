@@ -6,17 +6,63 @@
 	<div class="container-fluid">
 		{{range .Houses}}
 		<h2 class="text-center" id="message">Mortgage Information for {{.Name}}</h2>
+		<div class="form-group">
+			<div class="input-group" >
+				<span class="input-group-addon">$</span>
+				<input type="text" id="amount" class="form-control" placeholder="Mortgage Amount" onKeyUp="formatBid();"/>
+			</div>
+		</div>
 		<div class="well" id="buttons">
 			<div class="text-center">
-				<input id="inspect" type="button" class="btn btn-primary" value="Schedule Inspection" onClick="inspect({{.Id}});"/>
+				<input id="inspect" type="button" class="btn btn-primary" value="Apply For Mortgage" onClick="apply('{{.Id}}');"/>
 			</div>
 		</div>
 		{{end}}
 	</div>
     </body>
     <script>
-	function inspect(i) {
-		window.location={{.Url}} + "/house/" + i + "/scheduleInspection";
+	function formatBid() {
+    		var selection = window.getSelection().toString();
+    		if ( selection !== '' ) {
+        		return;
+    		}
+ 
+    		if ( $.inArray( event.keyCode, [38,40,37,39] ) !== -1 ) {
+        		return;
+    		}
+
+		var input = $("#amount").val();
+ 
+		var input = input.replace(/[\D\s\._\-]+/g, "");
+ 
+		input = input ? parseInt( input, 10 ) : 0;
+ 
+		$("#amount").val( function() {
+    			return ( input === 0 ) ? "" : input.toLocaleString( "en-US" );
+		} );
 	}
+
+	function apply(houseId) {
+		amount=$("#amount").val();
+		parameters={"amount":amount};
+
+		var form = $('<form></form>');
+    		form.attr("method", "post");
+		form.attr("action", {{.Url}} + "/house/" + houseId + "/enterMortgage");
+
+    		$.each(parameters, function(key, value) {
+        		var field = $('<input></input>');
+
+        		field.attr("type", "hidden");
+        		field.attr("name", key);
+        		field.attr("value", value);
+
+        		form.append(field);
+		});
+		$(document.body).append(form);
+    		form.submit();
+
+	}
+
     </script>
 </html>

@@ -3,7 +3,8 @@
 {{template "head"}}
     <body>
 	{{template "navbar" .}}
-	<img alt="Pathfinder Logo" class="center-block" src="images/Pathfinder-Logo.png"/>
+	<h2 style="display:none" class="text-center" id="url">{{.Url}}</h2>
+	<img alt="Pathfinder Logo" class="center-block" src="images/Pathfinder-Logo.png" onClick="$('#url').toggle();"/>
 	<div id="listings" class="container-fluid">
 		<div id="houses">
 		{{range .Houses}}
