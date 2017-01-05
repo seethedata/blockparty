@@ -1,11 +1,31 @@
 <!doctype html>
 <html>
-{{template "head"}}
+{{template "head" .}}
     <body>
 	{{template "navbar" .}}
 	<div class="container-fluid">
 		{{range .Houses}}
-		<h2 class="text-center" id="message">Mortgage Information for {{.Name}}</h2>
+		<h2 class="text-center" id="message">Mortgage Application for {{.Name}}</h2>
+		<div class="radio well">
+			<h4>Select lender:</h4>
+			<div>
+			<img src="/images/star.png"/ style="height:9em ; width:9em" onClick="selectLender('1');">
+			<label for="l1" >
+				<input type="radio" name="lender" id="l1" value="1"/>
+				Mortgage Star
+			</label>
+			<img src="/images/storm.png"/ style="height:9em ; width:9em" onClick="selectLender('2');">
+			<label>
+				<input type="radio" name="lender" id="l2" value="2"/>
+				Lending Storm
+			</label>
+			<img src="/images/leaf.png"/ style="height:9em ; width:9em" onClick="selectLender('3');">
+			<label>
+				<input type="radio" name="lender" id="l3" value="2"/>
+				GreenCents	
+			</label>
+			</div>
+		</div>
 		<div class="form-group">
 			<div class="input-group" >
 				<span class="input-group-addon">$</span>
@@ -44,7 +64,8 @@
 
 	function apply(houseId) {
 		amount=$("#amount").val();
-		parameters={"amount":amount};
+		l=$("input[name=lender]").val();
+		parameters={"amount":amount,"lender":l};
 
 		var form = $('<form></form>');
     		form.attr("method", "post");
@@ -62,6 +83,10 @@
 		$(document.body).append(form);
     		form.submit();
 
+	}
+
+	function selectLender(id) {
+		$("#l" + id).prop("checked",true);
 	}
 
     </script>

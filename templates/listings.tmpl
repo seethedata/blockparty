@@ -1,26 +1,27 @@
 <!doctype html>
 <html>
-{{template "head"}}
-    <body>
+{{template "head" .}}
+	<body>
 	{{template "navbar" .}}
-	<img alt="Pathfinder Logo" class="center-block" src="images/Pathfinder-Logo.png"/>
-	<div id="listings" class="container">
+	<img style="display:none" alt="Pathfinder Logo" id="pathfinder" class="center-block" src="images/Pathfinder-Logo.png"/>
+	<div id="listings" class="container" style="display:none">
 		<div id="houses" class="row">
 		{{range .Houses}}
-		{{template "housePanel" .}}
+			{{template "housePanel" .}}
 		{{end}}
 		</div>
 	</div>
-    </body>
-    <script>
-	$(".price").each(function(i){
-		var val=parseFloat($(this).text());
-		$(this).text("$" + val.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,'));
-	});
+	</body>
+	<script>
+		$("#pathfinder").show();
+		$("#listings").show();
+		$(".price").each(function(i){
+			var val=parseFloat($(this).text());
+			$(this).text("$" + val.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,'));
+		});
 
-    	function showDetails(houseId) {
-		window.location={{.Url}}+"/house/"+houseId;
-	}
-
-    </script>
+    		function showDetails(houseId) {
+			window.location={{.Url}}+"/house/"+houseId;
+		}
+	</script>
 </html>

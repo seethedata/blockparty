@@ -52,6 +52,7 @@ type House struct {
 	Bathrooms   float64 `json:"bathrooms" redis:"bathrooms"`
 	Status      string  `json:"status" redis:"status"`
 	Quality     int     `json:"quality" redis:"quality"`
+	InspectionDate string `json:"inspectionDate" redis:"inspectionDate"`
 }
 
 func newHouse() House {
@@ -71,6 +72,7 @@ type Mortgage struct {
 	User    string  `json:"user" redis:"user"`
 	Amount  float64 `json:"amount" redis:"amount"`
 	HouseId string  `json:"houseId" redis:"houseId"`
+	Lender string  `json:"lender" redis:"lender"`
 	Status  string  `json:"status" redis:"status"`
 }
 
@@ -159,7 +161,7 @@ func setDefaultHouses() {
 			h := newHouse()
 			h.Contract = getContractId()
 			_, err = c.Do("HMSET", "house:"+h.Id, "id", h.Id, "name", v.Name, "address", v.Address, "price",
-				v.Price, "image", v.Image, "contract", h.Contract, "description", v.Description, "bedrooms", v.Bedrooms, "bathrooms", v.Bathrooms, "status", v.Status, "quality", v.Quality)
+				v.Price, "image", v.Image, "contract", h.Contract, "description", v.Description, "bedrooms", v.Bedrooms, "bathrooms", v.Bathrooms, "status", v.Status, "quality", v.Quality,"inspectionDate","")
 			check("HMSET", err)
 		}
 	} else {
@@ -219,6 +221,14 @@ func changeMortgageStatus(i string, u string, status string) error {
 	return err
 }
 
+func setInspectionDate(i string, d string) error {
+	c := pool.Get()
+	defer c.Close()
+
+	key := "house:" + i
+	_, err := c.Do("HSET", key, "inspectionDate", d)
+	return err
+}
 func initialize() {
 	var cfServices cfServices
 	fmt.Println("Starting")
@@ -490,13 +500,14 @@ func enterMortgageHandler(w http.ResponseWriter, r *http.Request) {
 	a := r.PostFormValue("amount")
 	a = strings.Replace(a, ",", "", -1)
 	a = strings.Replace(a, ".", "", -1)
+	l := r.PostFormValue("lender")
 
 	c := pool.Get()
 	defer c.Close()
 
 	key := "mortgage:" + i + ":" + u
 
-	_, err = c.Do("HMSET", key, "user", u, "amount", a, "houseId", i, "status", "Submitted")
+	_, err = c.Do("HMSET", key, "user", u, "amount", a, "houseId", i, "lender", l , "status", "Submitted")
 	check("HMSET", err)
 	http.Redirect(w, r, mainURL+"/myMortgages", http.StatusFound)
 }
@@ -624,13 +635,24 @@ func scheduleInspectionHandler(w http.ResponseWriter, r *http.Request) {
 	h = getHouse(i)
 	err=changeHouseQuality(i,0)
 	check("changeHouseQuality",err)
-	t, err := template.ParseFiles("templates/scheduled.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
+	t, err := template.ParseFiles("templates/scheduleInspection.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
 	var payload = newPayload()
 	payload.Houses = append(payload.Houses, h)
 	payload.User = u
 	t.Execute(w, payload)
 }
+
+func enterInspectionAppointmentHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	i := vars["houseId"]
+	d := r.PostFormValue("date")
+
+	err:=setInspectionDate(i,d)
+	check("setInspectionDate",err)
+	http.Redirect(w, r, mainURL+"/myMortgages", http.StatusFound)
+}
+
 func changeHouseStatusHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	i := vars["houseId"]
@@ -777,9 +799,20 @@ func myMortgagesHandler(w http.ResponseWriter, r *http.Request) {
 	payload.Mortgages = myMortgages
 	payload.User = u
 
+	for _,m:= range myMortgages {
+		payload.Houses=append(payload.Houses,getHouse(m.HouseId))
+	}
 	t, err := template.ParseFiles("templates/myMortgages.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
 	t.Execute(w, payload)
+}
+
+func missingRequirementsHandler(w http.ResponseWriter, r *http.Request) {
+	payload:=newPayload()
+	t, err := template.ParseFiles("templates/noCookies.tmpl")
+	check("Parse template", err)
+	t.Execute(w, payload)
+
 }
 
 func resetHandler(w http.ResponseWriter, r *http.Request) {
@@ -822,10 +855,12 @@ func main() {
 	router.HandleFunc("/myMortgages", myMortgagesHandler)
 	router.HandleFunc("/inspector", inspectorHandler)
 	router.HandleFunc("/house/{houseId}/scheduleInspection", scheduleInspectionHandler)
+	router.HandleFunc("/house/{houseId}/enterInspectionAppointment", enterInspectionAppointmentHandler)
 	router.HandleFunc("/house/{houseId}/changeStatus/{status}", changeHouseStatusHandler)
 	router.HandleFunc("/house/{houseId}/changeQuality/{quality}", changeHouseQualityHandler)
 	router.HandleFunc("/house/{houseId}/bid/{user}/changeStatus/{status}", changeBidStatusHandler)
 	router.HandleFunc("/house/{houseId}/bid/{user}/checkStatus", checkBidStatusHandler)
+	router.HandleFunc("/requirementsMissing", missingRequirementsHandler)
 	router.HandleFunc("/reset", resetHandler)
 
 	http.Handle("/images/", http.FileServer(http.Dir("/app")))
