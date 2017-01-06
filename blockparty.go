@@ -540,7 +540,7 @@ func enterListingHandler(w http.ResponseWriter, r *http.Request) {
 	check("changeHouseStatus",err)
 
 
-	http.Redirect(w, r, mainURL+"/realtor", http.StatusFound)
+	http.Redirect(w, r, mainURL+"/seller", http.StatusFound)
 }
 
 func enterMortgageHandler(w http.ResponseWriter, r *http.Request) {
@@ -717,7 +717,7 @@ func changeHouseStatusHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := changeHouseStatus(i, s)
 	check("changeHouseStatus", err)
-	http.Redirect(w, r, mainURL+"/realtor", http.StatusFound)
+	http.Redirect(w, r, mainURL+"/seller", http.StatusFound)
 }
 
 func changeHouseQualityHandler(w http.ResponseWriter, r *http.Request) {
@@ -745,7 +745,7 @@ func changeBidStatusHandler(w http.ResponseWriter, r *http.Request) {
 		err=changeHouseStatus(i,"sold")
 		check("changeHouseStatus", err)
 	}
-	http.Redirect(w, r, mainURL+"/realtor", http.StatusFound)
+	http.Redirect(w, r, mainURL+"/seller", http.StatusFound)
 }
 
 func changeMortgageStatusHandler(w http.ResponseWriter, r *http.Request) {
@@ -806,7 +806,7 @@ func inspectorHandler (w http.ResponseWriter, r *http.Request) {
 	payload.User = u
 	t.Execute(w, payload)
 }
-func realtorHandler(w http.ResponseWriter, r *http.Request) {
+func sellerHandler(w http.ResponseWriter, r *http.Request) {
 	var u string
 	session, err := store.Get(r, "BlockPartySession")
 	if err != nil {
@@ -815,7 +815,7 @@ func realtorHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	u = session.Values["user"].(string)
 
-	t, err := template.ParseFiles("templates/realtor.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
+	t, err := template.ParseFiles("templates/seller.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
 	var payload = newPayload()
 	payload.Houses = getHouses()
@@ -897,7 +897,7 @@ func main() {
 	initialize()
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", listingsHandler)
-	router.HandleFunc("/realtor", realtorHandler)
+	router.HandleFunc("/seller", sellerHandler)
 	router.HandleFunc("/house/{houseId}", detailsHandler)
 	router.HandleFunc("/house/{houseId}/listHouse", listHouseHandler)
 	router.HandleFunc("/house/{houseId}/enterListing", enterListingHandler)
