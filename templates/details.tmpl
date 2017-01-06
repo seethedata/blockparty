@@ -31,20 +31,19 @@
 							document.write("Asking Price: $" + price.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,'));
 						</script>
 						</div>
-						{{range .Houses}}
+					{{range .Houses}}
 						{{if ne .Status "sold"}}
 						<div class="form-group">
 							<div class="input-group bidInfo" >
 								<span class="input-group-addon">$</span>
 								<input type="text" id="bidAmount" class="form-control" placeholder="Bid Amount" onKeyUp="formatBid();"/>
 								<span class="input-group-btn">
-									<input id="bidButton" type="button" class="btn btn-success" value="Bid" 
-								     onClick="bidOnHouse('{{range .Houses}}{{.Id}}{{end}}','{{.User}}');"/>
+									<input id="bidButton" type="button" class="btn btn-success" value="Bid" onClick="bidOnHouse('{{.Id}}');"/>
 								</span>
 							</div>
 						</div>
 						{{end}}
-						{{end}}
+					{{end}}
 						<div class="form-group">
 							<input type="button" class="form-control btn btn-primary" data-toggle="modal" data-target="#historyModal" value="View History"/>
 						</div>
