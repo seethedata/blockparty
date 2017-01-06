@@ -1,7 +1,7 @@
 {"data":[
-	{"name": "House1", "address": "123 Main Street", "price": 300000, "image": "house1.jpg", "contract": "abc-123", "description": "A good house with 3 bd/2br", "bedrooms": 3, "bathrooms": 2,"status": "sold", "quality": -1},
-	{"name": "House2", "address": "66 Pine Street", "price": 150000, "image": "house2.jpg", "contract": "abc-234", "description": "Great starter house! 3bd/1br", "bedrooms": 3, "bathrooms": 1,"status": "sold", "quality": -1},
-	{"name": "House3", "address": "8500 Rue Avenue", "price": 900000, "image": "house3.jpg", "contract": "abc-345", "description": "Gorgeous home. 4bd/3br", "bedrooms" : 4, "bathrooms": 3,"status": "sold", "quality": -1},
-	{"name": "House4", "address": "1250 Maple Road", "price": 450000, "image": "house4.jpg", "contract": "abc-456", "description":"Beautiful home 4bd/3br and a pool", "bedrooms": 4, "bathrooms": 3, "status": "sold", "quality": -1},
-	{"name": "House5", "address": "34A Bridge Street", "price": 90000, "image": "house5.jpg", "contract": "abc-567", "description": "Great location! No HOA fees!", "bedrooms": 2, "bathrooms": 1, "status": "sold",  "quality": -1 }
+	{"name": "House1", "address": "123 Main Street", "price": 0, "image": "house1.jpg", "contract": "0x8c1ce93528884f114852252e320c71a4a8ff8b51", "description": "A good house with 3 bd/2br", "bedrooms": 3, "bathrooms": 2,"status": "sold", "quality": -1},
+	{"name": "House2", "address": "66 Pine Street", "price": 0, "image": "house2.jpg", "contract": "0x3cd367d8a395a0299b7719159f70e8538ad46aa9", "description": "Great starter house! 3bd/1br", "bedrooms": 3, "bathrooms": 1,"status": "sold", "quality": -1},
+	{"name": "House3", "address": "8500 Rue Avenue", "price": 0, "image": "house3.jpg", "contract": "0x74580906a146518e94d4545581359ba5f6fd3171", "description": "Gorgeous home. 4bd/3br", "bedrooms" : 4, "bathrooms": 3,"status": "sold", "quality": -1},
+	{"name": "House4", "address": "1250 Maple Road", "price": 0, "image": "house4.jpg", "contract": "0x89e3ca7ec048d56e62e7d5678f4af67e0189c891", "description":"Beautiful home 4bd/3br and a pool", "bedrooms": 4, "bathrooms": 3, "status": "sold", "quality": -1},
+	{"name": "House5", "address": "34A Bridge Street", "price": 0, "image": "house5.jpg", "contract": "0xe8bcc1c046102aba67e6c63cf753be87f1bfcfb4", "description": "Great location! No HOA fees!", "bedrooms": 2, "bathrooms": 1, "status": "sold",  "quality": -1 }
 ]}

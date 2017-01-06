@@ -8,7 +8,6 @@ import (
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
-	"github.com/leekchan/accounting"
 	"github.com/satori/go.uuid"
 	"html/template"
 	"io/ioutil"
@@ -23,7 +22,6 @@ var (
 	pool    *redis.Pool
 	mainURL string
 	store   *sessions.CookieStore = sessions.NewCookieStore([]byte("BlockParty"))
-	ac                            = accounting.Accounting{Symbol: "$", Precision: 2, Thousand: ",", Decimal: "."}
 )
 
 type cfServices struct {
@@ -159,9 +157,8 @@ func setDefaultHouses() {
 
 		for _, v := range listings.Houses {
 			h := newHouse()
-			h.Contract = getContractId()
 			_, err = c.Do("HMSET", "house:"+h.Id, "id", h.Id, "name", v.Name, "address", v.Address, "price",
-				v.Price, "image", v.Image, "contract", h.Contract, "description", v.Description, "bedrooms", v.Bedrooms, "bathrooms", v.Bathrooms, "status", v.Status, "quality", v.Quality,"inspectionDate","")
+				v.Price, "image", v.Image, "contract", v.Contract, "description", v.Description, "bedrooms", v.Bedrooms, "bathrooms", v.Bathrooms, "status", v.Status, "quality", v.Quality,"inspectionDate","")
 			check("HMSET", err)
 		}
 	} else {
@@ -169,15 +166,35 @@ func setDefaultHouses() {
 	}
 }
 
+func setDefaultUsers() {
+	c := pool.Get()
+	defer c.Close()
+
+	_, err:= c.Do("HMSET", "users", "seller", "0xbc006b353770becc7fdecfd11eff9633a3ea651f","inspector","0x7da0bfcc195a8f021cd5f3175014c1d57b094f26","lender","0xf82335bf229a2eeee898108125937b34eaddc457")
+	check("HMSET", err)
+}
 func changeHouseStatus(i string, status string) error {
 	c := pool.Get()
 	defer c.Close()
+
+	if (status == "sold") {
+		err:=changeHousePrice(i,0)
+		check("ChangeHousePrice",err)
+	}
 
 	key := "house:" + i
 	_, err := c.Do("HSET", key, "status", status)
 	return err
 }
 
+func changeHousePrice(i string, price float64) error {
+	c := pool.Get()
+	defer c.Close()
+
+	key := "house:" + i
+	_, err := c.Do("HSET", key, "price", price)
+	return err
+}
 func changeHouseQuality(i string, q int) error {
 	c := pool.Get()
 	defer c.Close()
@@ -239,7 +256,7 @@ func initialize() {
 	check("Unmarshal", err)
 
 	env, _ := cfenv.Current()
-	mainURL = "https://" + env.ApplicationURIs[0]
+	mainURL = "http://" + env.ApplicationURIs[0]
 	services := env.Services
 
 	var credentials map[string]interface{}
@@ -278,13 +295,10 @@ func initialize() {
 
 	pool = newPool(host, port, password)
 	setDefaultHouses()
+	setDefaultUsers()
 }
 
 func getNewHouseId() string {
-	return uuid.NewV4().String()
-}
-
-func getContractId() string {
 	return uuid.NewV4().String()
 }
 
@@ -427,6 +441,32 @@ func detailsHandler(w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, payload)
 }
 
+func listHouseHandler(w http.ResponseWriter, r *http.Request) {
+	var u string
+	session, err := store.Get(r, "BlockPartySession")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	u = session.Values["user"].(string)
+
+	vars := mux.Vars(r)
+	i := vars["houseId"]
+
+	c := pool.Get()
+	defer c.Close()
+
+	var h House
+	h = getHouse(i)
+
+	var payload = newPayload()
+	payload.Houses = append(payload.Houses, h)
+	payload.User = u
+	t, err := template.ParseFiles("templates/listHouse.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
+	check("Parse template", err)
+	t.Execute(w, payload)
+}
+
 func bidsHandler(w http.ResponseWriter, r *http.Request) {
 	var u string
 	vars := mux.Vars(r)
@@ -484,6 +524,23 @@ func enterBidHandler(w http.ResponseWriter, r *http.Request) {
 	t, err := template.ParseFiles("templates/bid.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
 	t.Execute(w, payload)
+}
+
+func enterListingHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	i := vars["houseId"]
+	a := r.PostFormValue("askingPrice")
+	a = strings.Replace(a, ",", "", -1)
+	a = strings.Replace(a, ".", "", -1)
+
+	ap,err:= strconv.ParseFloat(a,64)
+	err=changeHousePrice(i,ap)
+	check("changeHousePrice",err)
+	err=changeHouseStatus(i,"listed")
+	check("changeHouseStatus",err)
+
+
+	http.Redirect(w, r, mainURL+"/realtor", http.StatusFound)
 }
 
 func enterMortgageHandler(w http.ResponseWriter, r *http.Request) {
@@ -809,7 +866,7 @@ func myMortgagesHandler(w http.ResponseWriter, r *http.Request) {
 
 func missingRequirementsHandler(w http.ResponseWriter, r *http.Request) {
 	payload:=newPayload()
-	t, err := template.ParseFiles("templates/noCookies.tmpl")
+	t, err := template.ParseFiles("templates/missingRequirements.tmpl")
 	check("Parse template", err)
 	t.Execute(w, payload)
 
@@ -817,7 +874,7 @@ func missingRequirementsHandler(w http.ResponseWriter, r *http.Request) {
 
 func resetHandler(w http.ResponseWriter, r *http.Request) {
 	var keys []string=make([]string,0)
-	keys=append(keys,"house:","bid:","mortgage:")
+	keys=append(keys,"house:","bid:","mortgage:","users")
 
 	c := pool.Get()
 	defer c.Close()
@@ -832,6 +889,7 @@ func resetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	setDefaultHouses()
+	setDefaultUsers()
 	http.Redirect(w, r, mainURL, http.StatusFound)
 }
 
@@ -841,6 +899,8 @@ func main() {
 	router.HandleFunc("/", listingsHandler)
 	router.HandleFunc("/realtor", realtorHandler)
 	router.HandleFunc("/house/{houseId}", detailsHandler)
+	router.HandleFunc("/house/{houseId}/listHouse", listHouseHandler)
+	router.HandleFunc("/house/{houseId}/enterListing", enterListingHandler)
 	router.HandleFunc("/house/{houseId}/enterBid", enterBidHandler)
 	router.HandleFunc("/house/{houseId}/myBid", myBidHandler)
 	router.HandleFunc("/myBids", myBidsHandler)
@@ -860,7 +920,7 @@ func main() {
 	router.HandleFunc("/house/{houseId}/changeQuality/{quality}", changeHouseQualityHandler)
 	router.HandleFunc("/house/{houseId}/bid/{user}/changeStatus/{status}", changeBidStatusHandler)
 	router.HandleFunc("/house/{houseId}/bid/{user}/checkStatus", checkBidStatusHandler)
-	router.HandleFunc("/requirementsMissing", missingRequirementsHandler)
+	router.HandleFunc("/missingRequirements", missingRequirementsHandler)
 	router.HandleFunc("/reset", resetHandler)
 
 	http.Handle("/images/", http.FileServer(http.Dir("/app")))

@@ -4,7 +4,7 @@
     <body>
 	{{template "navbar" .}}
 	<h2 style="display:none" class="text-center" id="url">{{.Url}}</h2>
-	<img alt="Pathfinder Logo" class="center-block" src="images/Pathfinder-Logo.png" onClick="$('#url').toggle();"/>
+	<img alt="Pathfinder Logo" class="center-block" src="/images/Pathfinder-Logo.png" onClick="$('#url').toggle();"/>
 	<div id="listings" class="container-fluid">
 		<div id="houses">
 		{{range .Houses}}
@@ -15,9 +15,9 @@
 					</div>
 					<div class="panel-body">
 						<span class="label label-success" style="{{if eq .Status "sold"}}visibility:hidden{{else}}visibility:visibile{{end}}">For Sale!</span>
-						<img src="images/{{.Image}}" class="houseImage center-block"/>
+						<img src="/images/{{.Image}}" class="houseImage center-block"/>
 						<div class="text-center">{{.Description}}</div>
-						<div class="text-center">$
+							<div class="text-center" style="visibility:{{if eq .Status "sold"}}hidden{{else}}visible{{end}}">$
 							<script>document.write(parseFloat("{{.Price}}").toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,'));</script>
 						</div>
 						<div>
@@ -26,7 +26,7 @@
 						{{else}}
 							<div class="text-center">
 								<input type="button" class="btn btn-success" value="View Bids" onClick="showBids('{{.Id}}');"/>
-								<input type="button" class="btn btn-primary" value="Delist House" onClick="delistHouse('{{.Id}}');"/>
+								<input type="button" class="btn btn-primary" value="Delist House" onClick="delistHouse('{{.Id}}','{{.Contract}}');"/>
 							</div>
 						{{end}}
 						</div>
@@ -40,16 +40,18 @@
 	</div>
     </body>
     <script>
+	
     	function showBids(id) {
 		window.location={{.Url}} +"/house/" + id + "/bids";
 	}
 
     	function listHouse(id) {
-		window.location={{.Url}} +"/house/" + id + "/changeStatus/listed";
+		window.location={{.Url}} +"/house/" + id + "/listHouse";
 	}
 
-    	function delistHouse(id) {
-		window.location={{.Url}} +"/house/" + id + "/changeStatus/sold";
+    	function delistHouse(id, contract) {
+		callHouseNotForSale(contract);	
+		window.location={{.Url}} + "/house/" + id + "/changeStatus/sold";
 	}
 
     </script>

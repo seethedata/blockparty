@@ -15,7 +15,7 @@
 						<div>
 							<div>
 								<img alt="house image" src="/images/{{range .Houses}}{{.Image}}{{end}}" 
-									id="houseImage" class="houseImage center-block" onClick="showUser();"/>
+									id="houseImage" class="houseImage center-block">
 							</div>
 							<div class="description" id="description">{{range .Houses}}{{.Description}}{{end}}</div>
 						</div>
@@ -23,28 +23,16 @@
 							<div><span class="glyphicon glyphicon-bed" id="bedrooms"></span> {{range .Houses}}{{.Bedrooms}}{{end}} bedrooms</div>
 							<div><span class="glyphicon glyphicon-scale" id="bathrooms"></span> {{range .Houses}}{{.Bathrooms}}{{end}} bathrooms</div>
 						</div>
-						<input type="hidden" value="{{.User}}" id="bidUser"/>
-						<div class="col-xs-12 text-center bidInfo" id="price" 
-						 	style="visibility:{{range .Houses}}{{if eq .Status "sold"}}hidden{{else}}visible{{end}}{{end}}">
-						<script>
-							price={{range .Houses}}{{.Price}}{{end}}
-							document.write("Asking Price: $" + price.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,'));
-						</script>
-						</div>
-						{{range .Houses}}
-						{{if ne .Status "sold"}}
 						<div class="form-group">
-							<div class="input-group bidInfo" >
+							<div class="input-group" >
 								<span class="input-group-addon">$</span>
-								<input type="text" id="bidAmount" class="form-control" placeholder="Bid Amount" onKeyUp="formatBid();"/>
+								<input type="text" id="askingPrice" class="form-control" placeholder="Asking Price" onKeyUp="formatPrice();"/>
 								<span class="input-group-btn">
-									<input id="bidButton" type="button" class="btn btn-success" value="Bid" 
-								     onClick="bidOnHouse('{{range .Houses}}{{.Id}}{{end}}','{{.User}}');"/>
+									<input id="listButton" type="button" class="btn btn-success" value="List" 
+								     onClick="listHouse('{{range .Houses}}{{.Id}}{{end}}','{{.User}}');"/>
 								</span>
 							</div>
 						</div>
-						{{end}}
-						{{end}}
 						<div class="form-group">
 							<input type="button" class="form-control btn btn-primary" data-toggle="modal" data-target="#historyModal" value="View History"/>
 						</div>
@@ -78,7 +66,7 @@
     </body>
     <script>
 	
-	function formatBid() {
+	function formatPrice() {
     		var selection = window.getSelection().toString();
     		if ( selection !== '' ) {
         		return;
@@ -88,29 +76,27 @@
         		return;
     		}
 
-		var input = $("#bidAmount").val();
+		var input = $("#askingPrice").val();
  
 		var input = input.replace(/[\D\s\._\-]+/g, "");
  
 		input = input ? parseInt( input, 10 ) : 0;
  
-		$("#bidAmount").val( function() {
+		$("#askingPrice").val( function() {
     			return ( input === 0 ) ? "" : input.toLocaleString( "en-US" );
 		} );
  
 	}
 
-	function showUser() {
-		$("#user").toggle();
-	}
-
-	function bidOnHouse(houseId) {
-		bidAmount=$("#bidAmount").val();
-		parameters={"bidAmount":bidAmount};
+	function listHouse(houseId) {
+		askingPrice=$("#askingPrice").val();
+		askingPrice=askingPrice.replace(",","").replace(".","");
+		callHouseForSale('{{range .Houses}}{{.Contract}}{{end}}', "'" + askingPrice + "'");
+		parameters={"askingPrice":askingPrice};
 
 		var form = $('<form></form>');
     		form.attr("method", "post");
-		form.attr("action", {{.Url}} + "/house/" + houseId + "/enterBid");
+		form.attr("action", {{.Url}} + "/house/" + houseId + "/enterListing");
 
     		$.each(parameters, function(key, value) {
         		var field = $('<input></input>');
@@ -123,7 +109,6 @@
 		});
 		$(document.body).append(form);
     		form.submit();
-
 	}
     </script>
 </html>
