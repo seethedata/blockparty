@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+{{template "head" .}}
+    <body>
+	{{template "navbar" .}}
+	<div class="container-fluid">
+		<h2 class="text-center" id="title">My Mortgages</h2>
+		<div id="mortgageTable">
+			<table class="table table-striped">
+			<thead>
+				<tr>
+				<th>House ID</th>
+				<th>Amount</th>
+				<th>Lender</th>
+				<th>Inspection</th>
+				<th>Status</th>
+				</tr>
+			</thead>
+			<tbody id="tableData">
+			{{$houses:= .Houses}}
+			{{range .Mortgages}}
+				<tr onClick="showMyMortgage('{{.HouseID}}');">
+					<td><a>{{.HouseID}}</a></td>
+					<td>$<script>document.write(({{.Amount}}).toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,')); </script></td>
+					<td><a>{{.Lender}}</a></td>
+					<td>
+					{{$houseID:=.HouseID}}
+						{{range $houses}}
+							{{if eq	.ID $houseID}}
+								{{.InspectionDate}}
+							{{end}}
+						{{end}}
+					</td>
+					<td>{{.Status}}</td>
+			{{end}}
+				</tr>
+			</tbody>
+			</table>
+		</div>
+	</div>
+    </body>
+    <script>
+	function showMyMortgage(houseID) {
+		window.location={{.URL}} + "/house/" + houseID + "/mortgage";
+	}
+    </script>
+</html>
