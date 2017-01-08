@@ -92,6 +92,15 @@ type Payload struct {
 	Message string  `json:"message" redis:"message"`
 }
 
+type User struct {
+	Name string `json:"name" redis:"name"`
+	Address string `json:"address" redis:"address"`
+}
+
+type UserList struct {
+	Data []User `json:"data" redis:"data"`
+}
+
 func newPool(addr string, port string, password string) *redis.Pool {
 	return &redis.Pool{
 		MaxIdle:     3,
@@ -170,9 +179,24 @@ func setDefaultUsers() {
 	c := pool.Get()
 	defer c.Close()
 
-	_, err:= c.Do("HMSET", "users", "seller", "0xbc006b353770becc7fdecfd11eff9633a3ea651f","inspector","0x7da0bfcc195a8f021cd5f3175014c1d57b094f26","lender","0xf82335bf229a2eeee898108125937b34eaddc457")
-	check("HMSET", err)
+	var users UserList
+	n, err := redis.Strings(c.Do("KEYS", "users"))
+	check("KEYS", err)
+	if len(n) == 0 {
+		fmt.Println("Creating default users.")
+		file, err := ioutil.ReadFile("./users.json")
+		check("Read houses JSON", err)
+
+		err = json.Unmarshal(file, &users)
+		check("Unmarshal", err)
+	}
+
+	for _,v:=range users.Data {
+		_, err= c.Do("HSET", "users", v.Name, v.Address)
+		check("HSET", err)
+	}
 }
+
 func changeHouseStatus(i string, status string) error {
 	c := pool.Get()
 	defer c.Close()
