@@ -9,8 +9,8 @@
 			<table class="table table-striped">
 			<thead>
 				<tr>
-					<th>House Id</th>
-					<th>User Id</th>
+					<th>House ID</th>
+					<th>User ID</th>
 					<th>Amount</th>
 					<th colspan="2" class="text-center">Action</th>
 				</tr>
@@ -18,12 +18,12 @@
 			<tbody id="tableData">
 			{{range .Mortgages}}
 				<tr>
-					<td>{{.HouseId}}</td>
+					<td>{{.HouseID}}</td>
 					<td>{{.User}}</td>
 					<td>$<script>document.write(({{.Amount}}).toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,')); </script></td>
 					{{if eq .Status "Submitted"}}
-						<td><input type="button" class="btn btn-success center-block" value="Accept" onClick="acceptMortgage('{{.HouseId}}','{{.User}}');"/></td>
-						<td><input type="button" class="btn btn-danger center-block" value="Reject" onClick="rejectMortgage('{{.HouseId}}','{{.User}}');"/></td>
+						<td><input type="button" class="btn btn-success center-block" value="Accept" onClick="acceptMortgage('{{.HouseID}}','{{.User}}');"/></td>
+						<td><input type="button" class="btn btn-danger center-block" value="Reject" onClick="rejectMortgage('{{.HouseID}}','{{.User}}');"/></td>
 					{{else}}
 						<td style="color:#9A9A9A" class="text-center" colspan="2">{{.Status}}</td>
 					{{end}}
@@ -36,11 +36,11 @@
     </body>
     <script>
 	function acceptMortgage(i,u) {
-		window.location={{.Url}} + "/house/" + i + "/mortgage/" + u + "/changeStatus/Accepted";
+		window.location={{.URL}} + "/house/" + i + "/mortgage/" + u + "/changeStatus/Accepted";
 	}
 
 	function rejectMortgage(i,u) {
-		window.location={{.Url}} + "/house/" + i + "/mortgage/" + u + "/changeStatus/Rejected";
+		window.location={{.URL}} + "/house/" + i + "/mortgage/" + u + "/changeStatus/Rejected";
 	}
     </script>
 </html>

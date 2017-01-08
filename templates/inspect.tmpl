@@ -37,7 +37,7 @@
 						5-Excellent	
 					</label>
 				</div>
-				<input type="button" class="btn btn-primary text-center" value="Submit Inspection" onClick="enterInspection('{{.Id}}')"/>
+				<input type="button" class="btn btn-primary text-center" value="Submit Inspection" onClick="enterInspection('{{.ID}}')"/>
 			</div>
 		{{end}}
 	</div>
@@ -46,7 +46,7 @@
 
 	function enterInspection(i) {
 		s=$("input[name=quality]").val();
-		window.location={{.Url}} + "/house/" + i + "/changeQuality/" + s;
+		window.location={{.URL}} + "/house/" + i + "/changeQuality/" + s;
 	}
     </script>
 </html>

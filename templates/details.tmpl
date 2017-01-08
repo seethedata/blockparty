@@ -38,7 +38,7 @@
 								<span class="input-group-addon">$</span>
 								<input type="text" id="bidAmount" class="form-control" placeholder="Bid Amount" onKeyUp="formatBid();"/>
 								<span class="input-group-btn">
-									<input id="bidButton" type="button" class="btn btn-success" value="Bid" onClick="bidOnHouse('{{.Id}}');"/>
+									<input id="bidButton" type="button" class="btn btn-success" value="Bid" onClick="bidOnHouse('{{.ID}}');"/>
 								</span>
 							</div>
 						</div>
@@ -103,13 +103,13 @@
 		$("#user").toggle();
 	}
 
-	function bidOnHouse(houseId) {
+	function bidOnHouse(houseID) {
 		bidAmount=$("#bidAmount").val();
 		parameters={"bidAmount":bidAmount};
 
 		var form = $('<form></form>');
     		form.attr("method", "post");
-		form.attr("action", {{.Url}} + "/house/" + houseId + "/enterBid");
+		form.attr("action", {{.URL}} + "/house/" + houseID + "/enterBid");
 
     		$.each(parameters, function(key, value) {
         		var field = $('<input></input>');

@@ -10,7 +10,7 @@
 			<thead>
 				<tr>
 					<th>Name</th>
-					<th>House Id</th>
+					<th>House ID</th>
 					<th>Rating</th>
 				</tr>
 			</thead>
@@ -18,9 +18,9 @@
 			{{range .Houses}}
 				<tr>
 					<td>{{.Name}}</td>
-					<td>{{.Id}}</td>
+					<td>{{.ID}}</td>
 					{{if eq .Quality 0}}
-					<td><input type="button" class="btn btn-success center-block" value="Inspect" onClick="inspect('{{.Id}}');"/></td>
+					<td><input type="button" class="btn btn-success center-block" value="Inspect" onClick="inspect('{{.ID}}');"/></td>
 					{{else}}
 						<td style="color:#9A9A9A" class="text-center"><script>document.write(setRating('{{.Quality}}'));</script></td>
 					{{end}}
@@ -33,7 +33,7 @@
     </body>
     <script>
 	function inspect(i) {
-		window.location={{.Url}} + "/house/" + i + "/inspect";
+		window.location={{.URL}} + "/house/" + i + "/inspect";
 	}
 
 	function setRating(q) {

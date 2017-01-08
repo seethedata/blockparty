@@ -34,7 +34,7 @@
 		</div>
 		<div class="well" id="buttons">
 			<div class="text-center">
-				<input id="inspect" type="button" class="btn btn-primary" value="Apply For Mortgage" onClick="apply('{{.Id}}');"/>
+				<input id="inspect" type="button" class="btn btn-primary" value="Apply For Mortgage" onClick="apply('{{.ID}}');"/>
 			</div>
 		</div>
 		{{end}}
@@ -62,14 +62,14 @@
 		} );
 	}
 
-	function apply(houseId) {
+	function apply(houseID) {
 		amount=$("#amount").val();
 		l=$("input[name=lender]").val();
 		parameters={"amount":amount,"lender":l};
 
 		var form = $('<form></form>');
     		form.attr("method", "post");
-		form.attr("action", {{.Url}} + "/house/" + houseId + "/enterMortgage");
+		form.attr("action", {{.URL}} + "/house/" + houseID + "/enterMortgage");
 
     		$.each(parameters, function(key, value) {
         		var field = $('<input></input>');

@@ -8,7 +8,7 @@
 		<h2 class="text-center" id="message">Mortgage Information for {{.Name}}</h2>
 		<div class="well" id="buttons" >
 			<div class="text-center">
-				<input id="inspect" type="button" class="btn btn-primary" value="Schedule Inspection" onClick="scheduleInspection('{{.Id}}');"/>
+				<input id="inspect" type="button" class="btn btn-primary" value="Schedule Inspection" onClick="scheduleInspection('{{.ID}}');"/>
 			</div>
 		</div>
 		{{end}}
@@ -16,7 +16,7 @@
     </body>
     <script>
 	function scheduleInspection(i) {
-		window.location={{.Url}} + "/house/" + i + "/scheduleInspection";
+		window.location={{.URL}} + "/house/" + i + "/scheduleInspection";
 	}
     </script>
 </html>
