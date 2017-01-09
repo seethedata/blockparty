@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"reflect"
 )
 
 var (
@@ -102,6 +103,32 @@ type User struct {
 // UserList is a list of ethereum users
 type UserList struct {
 	Data []User `json:"data" redis:"data"`
+}
+
+type SystemUsers struct {
+	Seller string	`json:"seller" redis:"seller"`
+	Lender string	`json:"lender" redis:"lender"`
+	Inspector string `json:"inspector" redis:"inspector"`
+}
+
+func getSystemUsers() SystemUsers {
+	var u SystemUsers
+
+	c := pool.Get()
+	defer c.Close()
+
+	r,err := c.Do("HGETALL", "users")
+	err = redis.ScanStruct(r.([]interface{}),&u)
+	check("ScanStruct", err)
+
+
+	f:=reflect.TypeOf(u)
+	v:=reflect.ValueOf(u)
+	for  i:=0; i < f.NumField(); i++ {
+		log.Print(f.Field(i).Name + " " + v.Field(i).Interface().(string))
+	}
+
+	return u
 }
 
 func newPool(addr string, port string, password string) *redis.Pool {
@@ -439,6 +466,7 @@ func listingsHandler(w http.ResponseWriter, r *http.Request) {
 	listings := newPayload()
 	listings.Houses = getHouses()
 	listings.User = u
+	check("Marshal",err)
 	t.Execute(w, listings)
 }
 
