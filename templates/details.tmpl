@@ -83,26 +83,30 @@
 	function bidOnHouse(houseID) {
 		bidAmount=$("#bidAmount").val();
 		bidAmount=parseInt(bidAmount.replace(",","").replace(".",""));
-		userContract="0x7da0bfcc195a8f021cd5f3175014c1d57b094f26";
-		callHousePlaceBid({{range .Houses}}{{.Contract}}{{end}},bidAmount,userContract);
-
-		parameters={"bidAmount":bidAmount};
-
-		var form = $('<form></form>');
-    		form.attr("method", "post");
-		form.attr("action", {{.URL}} + "/house/" + houseID + "/enterBid");
-
-    		$.each(parameters, function(key, value) {
-        		var field = $('<input></input>');
-
-        		field.attr("type", "hidden");
-        		field.attr("name", key);
-        		field.attr("value", value);
-
-        		form.append(field);
-		});
-		$(document.body).append(form);
-    		form.submit();
+		if ($.isNumeric(bidAmount)) {
+			userContract="0x7da0bfcc195a8f021cd5f3175014c1d57b094f26";
+			callHousePlaceBid({{range .Houses}}{{.Contract}}{{end}},bidAmount,userContract);
+	
+			parameters={"bidAmount":bidAmount};
+	
+			var form = $('<form></form>');
+	    		form.attr("method", "post");
+			form.attr("action", {{.URL}} + "/house/" + houseID + "/enterBid");
+	
+	    		$.each(parameters, function(key, value) {
+	        		var field = $('<input></input>');
+	
+	        		field.attr("type", "hidden");
+	        		field.attr("name", key);
+	        		field.attr("value", value);
+	
+	        		form.append(field);
+			});
+			$(document.body).append(form);
+	    		form.submit();
+		} else {
+			alert("Please enter a bid amount.");
+		}
 
 	}
     </script>

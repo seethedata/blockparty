@@ -64,36 +64,31 @@
 	</div>
     </body>
     <script>
-
-/*
-	function showProgressBar() {
-		waitingDialog.show("Listing {{range .Houses}}{{.Address}}{{end}}",{dialogSize : 'sm',headerClass: 'text-center',rtl:false}); 
-	}
-*/
 	function listHouse(houseID) {
-/*		setTimeout(function(){ waitingDialog.progress(25)},500);*/
 		askingPrice=$("#askingPrice").val();
 		askingPrice=parseInt(askingPrice.replace(",","").replace(".",""));
-		callHouseForSale('{{range .Houses}}{{.Contract}}{{end}}', askingPrice,'{{range .Users}}{{if eq .Type "System"}}{{.Address}}{{end}}{{end}}');
-/*		setTimeout(function(){ waitingDialog.progress(50)},500);*/
-		parameters={"askingPrice":askingPrice};
-
-		var form = $('<form></form>');
-    		form.attr("method", "post");
-		form.attr("action", {{.URL}} + "/house/" + houseID + "/enterListing");
-
-    		$.each(parameters, function(key, value) {
-        		var field = $('<input></input>');
-
-        		field.attr("type", "hidden");
-        		field.attr("name", key);
-        		field.attr("value", value);
-
-        		form.append(field);
-		});
-/*		setTimeout(function(){ waitingDialog.progress(100)},500);*/
-		$(document.body).append(form);
-    		form.submit();
+		if ($.isNumeric(askingPrice)) {
+			callHouseForSale('{{range .Houses}}{{.Contract}}{{end}}', askingPrice,'{{range .Users}}{{if eq .Type "System"}}{{.Address}}{{end}}{{end}}');
+			parameters={"askingPrice":askingPrice};
+	
+			var form = $('<form></form>');
+	    		form.attr("method", "post");
+			form.attr("action", {{.URL}} + "/house/" + houseID + "/enterListing");
+	
+	    		$.each(parameters, function(key, value) {
+	        		var field = $('<input></input>');
+	
+	        		field.attr("type", "hidden");
+	        		field.attr("name", key);
+	        		field.attr("value", value);
+	
+	        		form.append(field);
+			});
+			$(document.body).append(form);
+	    		form.submit();
+		} else {
+			alert("Please enter an asking price.");
+		}
 	}
     </script>
 </html>

@@ -30,24 +30,28 @@
 	function enterAppraisal(i,u,c) {
 		amount=$("#appraiseAmount").val();
 		amount=parseInt(amount.replace(",","").replace(".",""));
-		callHouseAppraisal(c,amount);
-		parameters={"amount":amount,"user":u};
-
-		var form = $('<form></form>');
-    		form.attr("method", "post");
-		form.attr("action", {{.URL}} + "/house/" + i + "/mortgage/" + u + "/enterAppraisal");
-
-    		$.each(parameters, function(key, value) {
-        		var field = $('<input></input>');
-
-        		field.attr("type", "hidden");
-        		field.attr("name", key);
-        		field.attr("value", value);
-
-        		form.append(field);
-		});
-		$(document.body).append(form);
-    		form.submit();
+		if ($.isNumeric(amount)) {
+			callHouseAppraisal(c,amount);
+			parameters={"amount":amount,"user":u};
+	
+			var form = $('<form></form>');
+	    		form.attr("method", "post");
+			form.attr("action", {{.URL}} + "/house/" + i + "/mortgage/" + u + "/enterAppraisal");
+	
+	    		$.each(parameters, function(key, value) {
+	        		var field = $('<input></input>');
+	
+	        		field.attr("type", "hidden");
+	        		field.attr("name", key);
+	        		field.attr("value", value);
+	
+	        		form.append(field);
+			});
+			$(document.body).append(form);
+	    		form.submit();
+		} else {
+			alert("Please enter an appraisal amount.");
+		}
 	}
 
 	function autoAppraise() {

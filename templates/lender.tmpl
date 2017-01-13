@@ -100,24 +100,28 @@
 	function overrideMortgageAmount(i,u,c) {
 		amount=$("#overrideAmount").val();
 		amount=parseInt(amount.replace(",","").replace(".",""));
-		callHouseApplyMortgage(c,amount);
-		parameters={"amount":amount,"user":u};
-
-		var form = $('<form></form>');
-    		form.attr("method", "post");
-		form.attr("action", {{.URL}} + "/house/" + i + "/mortgage/" + u + "/updateAmount");
-
-    		$.each(parameters, function(key, value) {
-        		var field = $('<input></input>');
-
-        		field.attr("type", "hidden");
-        		field.attr("name", key);
-        		field.attr("value", value);
-
-        		form.append(field);
-		});
-		$(document.body).append(form);
-    		form.submit();
+		if ($.isNumeric(amount)) {
+			callHouseApplyMortgage(c,amount);
+			parameters={"amount":amount,"user":u};
+	
+			var form = $('<form></form>');
+	    		form.attr("method", "post");
+			form.attr("action", {{.URL}} + "/house/" + i + "/mortgage/" + u + "/updateAmount");
+	
+	    		$.each(parameters, function(key, value) {
+	        		var field = $('<input></input>');
+	
+	        		field.attr("type", "hidden");
+	        		field.attr("name", key);
+	        		field.attr("value", value);
+	
+	        		form.append(field);
+			});
+			$(document.body).append(form);
+	    		form.submit();
+		} else {
+			alert("Please enter an override amount.");
+		}
 	}
     </script>
 </html>

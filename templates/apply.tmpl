@@ -42,25 +42,29 @@
 	function apply(houseID,c) {
 		amount=$("#amount").val();
 		amount=parseInt(amount.replace(",","").replace(".",""));
-		l=$("input[name=lender]").val();
-
-		parameters={"amount":amount,"lender":l};
-
-		var form = $('<form></form>');
-    		form.attr("method", "post");
-		form.attr("action", {{.URL}} + "/house/" + houseID + "/enterMortgage");
-
-    		$.each(parameters, function(key, value) {
-        		var field = $('<input></input>');
-
-        		field.attr("type", "hidden");
-        		field.attr("name", key);
-        		field.attr("value", value);
-
-        		form.append(field);
-		});
-		$(document.body).append(form);
-    		form.submit();
+		if ($.isNumeric(amount)) {
+			l=$("input[name=lender]").val();
+	
+			parameters={"amount":amount,"lender":l};
+	
+			var form = $('<form></form>');
+	    		form.attr("method", "post");
+			form.attr("action", {{.URL}} + "/house/" + houseID + "/enterMortgage");
+	
+	    		$.each(parameters, function(key, value) {
+	        		var field = $('<input></input>');
+	
+	        		field.attr("type", "hidden");
+	        		field.attr("name", key);
+	        		field.attr("value", value);
+	
+	        		form.append(field);
+			});
+			$(document.body).append(form);
+	    		form.submit();
+		} else {
+			alert("Please enter a mortgage amount.");
+		}
 
 	}
 
