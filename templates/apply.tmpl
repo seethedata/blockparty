@@ -29,7 +29,7 @@
 		<div class="form-group">
 			<div class="input-group" >
 				<span class="input-group-addon">$</span>
-				<input type="text" id="amount" class="form-control" placeholder="Mortgage Amount" onKeyUp="formatInput(this);"/>
+				<input type="text" id="amount" class="form-control" placeholder="Mortgage Amount" onKeyUp="formatInput(this,'#applyButton');"/>
 				<span class="input-group-btn">
 					<input id="applyButton" type="button" class="btn btn-primary" value="Apply" onClick="apply('{{.ID}}','{{.Contract}}');"/>
 				</span>

@@ -23,12 +23,14 @@
 		return parseFloat(a).toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,');
 	}
 
-	function formatInput(e) {
+	function formatInput(e,b) {
     		var selection = window.getSelection().toString();
     		if ( selection !== '' ) {
         		return;
     		}
- 
+		if(event.keyCode == 13){
+        		$(b).click();
+    		}
     		if ( $.inArray( event.keyCode, [38,40,37,39] ) !== -1 ) {
         		return;
     		}

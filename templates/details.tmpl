@@ -36,7 +36,7 @@
 						<div class="form-group">
 							<div class="input-group bidInfo" >
 								<span class="input-group-addon">$</span>
-								<input type="text" id="bidAmount" class="form-control" placeholder="Bid Amount" onKeyUp="formatInput(this);"/>
+								<input type="text" id="bidAmount" class="form-control" placeholder="Bid Amount" onKeyUp="formatInput(this,'#bidButton');"/>
 								<span class="input-group-btn">
 									<input id="bidButton" type="button" class="btn btn-success" value="Bid" onClick="bidOnHouse('{{.ID}}');"/>
 								</span>

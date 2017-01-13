@@ -14,7 +14,7 @@
 			<div class="form-group">
 				<div class="input-group appraiseInfo" >
 					<span class="input-group-addon">$</span>
-					<input type="text" id="appraiseAmount" class="form-control" placeholder="Appraisal Amount" onKeyUp="formatInput(this);"/>
+					<input type="text" id="appraiseAmount" class="form-control" placeholder="Appraisal Amount" onKeyUp="formatInput(this,'#appraiseButton');"/>
 					<span class="input-group-btn">
 		{{$houses:=.Houses}}
 		{{range .Mortgages}}
