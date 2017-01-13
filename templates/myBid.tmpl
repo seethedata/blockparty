@@ -23,7 +23,7 @@
 
 	{{range .Bids}}
 	function updateStatus(){
-		$.getJSON(mainURL + "/house/" + {{ .HouseID }} + "/bid/" + {{.User}} + "/checkStatus",handleStatus);
+		$.getJSON(mainURL + "/house/" + {{ .HouseID }} + "/bid/" + {{.UserID}} + "/checkStatus",{ts:Date.now()},handleStatus);
 	}
 
 	function setMessage(s) {
@@ -35,7 +35,7 @@
 			message="The seller has accepted another bid.";
 			$("#buttons").show();
 		} else {
-			message="You have bid $" + ({{.Amount}}).toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,') + " for this house.";
+			message="You have bid $" + formatAmount({{.Amount}}) + " for this house.";
 		}
 		$("#message").html(message);
 	}

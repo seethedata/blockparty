@@ -9,19 +9,18 @@
 		<div id="houses">
 		{{range .Houses}}
 			<div class="col-md-4">
-				<div class="panel {{if eq .Status "sold"}}panel-primary{{else}}panel-success{{end}}">
+				<div class="panel {{if eq .Status "Sold"}}panel-primary{{else}}panel-success{{end}}">
 					<div class="panel-heading">
-						<h3 class="panel-title">{{.Name}}</h3>
+						<h3 class="panel-title">{{.Address}}</h3>
 					</div>
 					<div class="panel-body">
-						<span class="label label-success" style="{{if eq .Status "sold"}}visibility:hidden{{else}}visibility:visibile{{end}}">For Sale!</span>
+						<span class="label label-success" style="{{if eq .Status "Sold"}}visibility:hidden{{else}}visibility:visibile{{end}}">For Sale!</span>
 						<img src="/images/{{.Image}}" class="houseImage center-block"/>
-						<div class="text-center">{{.Description}}</div>
-							<div class="text-center" style="visibility:{{if eq .Status "sold"}}hidden{{else}}visible{{end}}">$
-							<script>document.write(parseFloat("{{.Price}}").toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,'));</script>
+						<div class="text-center" style="visibility:{{if eq .Status "Sold"}}hidden{{else}}visible{{end}}">$
+							<script>document.write(formatAmount({{.Price}}));</script>
 						</div>
 						<div>
-						{{if eq .Status "sold"}}
+						{{if eq .Status "Sold"}}
 							<input type="button" class="btn btn-primary center-block" value="List House" onClick="listHouse('{{.ID}}');"/>
 						{{else}}
 							<div class="text-center">
@@ -50,8 +49,8 @@
 	}
 
     	function delistHouse(ID, contract) {
-		callHouseNotForSale(contract);	
-		window.location={{.URL}} + "/house/" + ID + "/changeStatus/sold";
+		callHouseNotForSale(contract,'{{range .Users}}{{if eq .Type "System"}}{{.Address}}{{end}}{{end}}');
+		window.location={{.URL}} + "/house/" + ID + "/changeStatus/Sold";
 	}
 
     </script>

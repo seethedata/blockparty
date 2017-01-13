@@ -9,7 +9,7 @@
 			<table class="table table-striped">
 			<thead>
 				<tr>
-					<th>Name</th>
+					<th>Address</th>
 					<th>House ID</th>
 					<th>Rating</th>
 				</tr>
@@ -17,7 +17,7 @@
 			<tbody id="tableData">
 			{{range .Houses}}
 				<tr>
-					<td>{{.Name}}</td>
+					<td>{{.Address}}</td>
 					<td>{{.ID}}</td>
 					{{if eq .Quality 0}}
 					<td><input type="button" class="btn btn-success center-block" value="Inspect" onClick="inspect('{{.ID}}');"/></td>

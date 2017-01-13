@@ -16,13 +16,12 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"reflect"
 )
 
 var (
 	pool    *redis.Pool
 	mainURL string
-	store   *sessions.CookieStore = sessions.NewCookieStore([]byte("BlockParty"))
+	store   = sessions.NewCookieStore([]byte("BlockParty"))
 )
 
 type cfServices struct {
@@ -62,18 +61,24 @@ func newHouse() House {
 
 // A Bid on a house
 type Bid struct {
-	User    string  `json:"user" redis:"user"`
-	Amount  float64 `json:"amount" redis:"amount"`
-	HouseID string  `json:"houseID" redis:"houseID"`
-	Status  string  `json:"status" redis:"status"`
+	UserID       string  `json:"userID" redis:"userID"`
+	UserAddress  string  `json:"userAddress" redis:"userAddress"`
+	User         User    `json:"user" redis:"user"`
+	Amount       float64 `json:"amount" redis:"amount"`
+	HouseID      string  `json:"houseID" redis:"houseID"`
+	HouseAddress string  `json:"houseAddress" redis:"houseAddress"`
+	Status       string  `json:"status" redis:"status"`
 }
+
 // A Mortgage on a house
 type Mortgage struct {
-	User    string  `json:"user" redis:"user"`
-	Amount  float64 `json:"amount" redis:"amount"`
-	HouseID string  `json:"houseID" redis:"houseID"`
-	Lender  string  `json:"lender" redis:"lender"`
-	Status  string  `json:"status" redis:"status"`
+	User          string  `json:"user" redis:"user"`
+	Amount        float64 `json:"amount" redis:"amount"`
+	HouseID       string  `json:"houseID" redis:"houseID"`
+	Lender        string  `json:"lender" redis:"lender"`
+	Appraisal     float64 `json:"appraisal" redis:"appraisal"`
+	AppraisalDate string  `json:"appraisalDate" redis:"appraisalDate"`
+	Status        string  `json:"status" redis:"status"`
 }
 
 func (m Mortgage) getKey() string {
@@ -81,54 +86,42 @@ func (m Mortgage) getKey() string {
 }
 
 func (b Bid) getKey() string {
-	return "bid:" + b.HouseID + ":" + b.User
+	return "bid:" + b.HouseID + ":" + b.UserID
 }
 
 //Payload is a generic Container to hold data for templates
 type Payload struct {
-	Houses    []House    `json:"data" redis:"data"`
-	Bids      []Bid      `json:"bids" redis:"bids"`
-	Mortgages []Mortgage `json:"mortgages" redis:"mortgages"`
-	User      string     `json:"user" redis:"user"`
-	URL       string     `json:"URL" redis:"URL"`
-	Parameters   []byte     `json:"parameters" redis:"parameters"`
+	Houses     []House    `json:"data" redis:"data"`
+	Bids       []Bid      `json:"bids" redis:"bids"`
+	Mortgages  []Mortgage `json:"mortgages" redis:"mortgages"`
+	Users      []User     `json:"users" redis:"users"`
+	URL        string     `json:"URL" redis:"URL"`
+	Parameters []byte     `json:"parameters" redis:"parameters"`
 }
 
 // User is a user from ethereum
 type User struct {
+	ID      string `json:"id" redis:"id"`
 	Name    string `json:"name" redis:"name"`
 	Address string `json:"address" redis:"address"`
+	Type    string `json:"type" redis:"type"`
+}
+
+// Address is a contract address in ethereum
+type Address struct {
+	ID     string `json:"id" redis:"id"`
+	UserID string `json:"userID" redis:"userID"`
+	Status string `json:"status" redis:"status"`
+}
+
+// AddressList is a list of ethereum users
+type AddressList struct {
+	Data []Address `json:"data" redis:"data"`
 }
 
 // UserList is a list of ethereum users
 type UserList struct {
 	Data []User `json:"data" redis:"data"`
-}
-
-type SystemUsers struct {
-	Seller string	`json:"seller" redis:"seller"`
-	Lender string	`json:"lender" redis:"lender"`
-	Inspector string `json:"inspector" redis:"inspector"`
-}
-
-func getSystemUsers() SystemUsers {
-	var u SystemUsers
-
-	c := pool.Get()
-	defer c.Close()
-
-	r,err := c.Do("HGETALL", "users")
-	err = redis.ScanStruct(r.([]interface{}),&u)
-	check("ScanStruct", err)
-
-
-	f:=reflect.TypeOf(u)
-	v:=reflect.ValueOf(u)
-	for  i:=0; i < f.NumField(); i++ {
-		log.Print(f.Field(i).Name + " " + v.Field(i).Interface().(string))
-	}
-
-	return u
 }
 
 func newPool(addr string, port string, password string) *redis.Pool {
@@ -160,8 +153,7 @@ func newPayload() *Payload {
 }
 
 func getHouses() []House {
-	var h House
-	houses:= make([]House, 0)
+	var houses []House
 
 	c := pool.Get()
 	defer c.Close()
@@ -170,11 +162,11 @@ func getHouses() []House {
 	check("Keys", err)
 
 	for _, v := range n {
+		var h House
 		r, err := redis.Values(c.Do("HGETALL", v))
 		err = redis.ScanStruct(r, &h)
 		check("ScanStruct", err)
-		houses = append(houses, House{ID: h.ID, Name: h.Name, Address: h.Address, Price: h.Price, Image: h.Image, Contract: h.Contract,
-			Description: h.Description, Bedrooms: h.Bedrooms, Bathrooms: h.Bathrooms, Status: h.Status, Quality: h.Quality})
+		houses = append(houses, h)
 	}
 	return houses
 }
@@ -219,14 +211,42 @@ func setDefaultUsers() {
 
 		err = json.Unmarshal(file, &users)
 		check("Unmarshal", err)
+
+		for _, v := range users.Data {
+			key := "user:" + v.Name
+			_, err = c.Do("HMSET", key, "address", v.Address, "type", "System")
+			check("HSET", err)
+		}
+	} else {
+		fmt.Println("Default system users already exist. Skipping system user creation.")
 	}
 
-	for _, v := range users.Data {
-		_, err = c.Do("HSET", "users", v.Name, v.Address)
-		check("HSET", err)
-	}
 }
 
+func setDefaultAddresses() {
+	c := pool.Get()
+	defer c.Close()
+
+	var addresses AddressList
+	n, err := redis.Strings(c.Do("KEYS", "address:*"))
+	check("KEYS", err)
+	if len(n) == 0 {
+		fmt.Println("Creating contracts addresses.")
+		file, err := ioutil.ReadFile("./addresses.json")
+		check("Read addresses JSON", err)
+
+		err = json.Unmarshal(file, &addresses)
+		check("Unmarshal", err)
+
+		for _, v := range addresses.Data {
+			key := "address:" + v.ID
+			_, err = c.Do("HMSET", key, "id", v.ID, "status", "Unassigned")
+			check("HSET", err)
+		}
+	} else {
+		fmt.Println("Default addresses already exist. Skipping addresses creation.")
+	}
+}
 func changeHouseStatus(i string, status string) error {
 	c := pool.Get()
 	defer c.Close()
@@ -273,8 +293,8 @@ func rejectOtherBids(i string, u string) error {
 
 	bids := getBids(i + ":*")
 	for _, v := range bids {
-		if v.User != u {
-			key := "bid:" + i + ":" + v.User
+		if v.UserID != u {
+			key := "bid:" + i + ":" + v.UserID
 			_, err := c.Do("HSET", key, "status", "Rejected")
 			check("HSET", err)
 		}
@@ -298,6 +318,24 @@ func setInspectionDate(i string, d string) error {
 
 	key := "house:" + i
 	_, err := c.Do("HSET", key, "inspectionDate", d)
+	return err
+}
+
+func setAppraisalDate(i string, u string, d string) error {
+	c := pool.Get()
+	defer c.Close()
+	key := "mortgage:" + i + ":" + u
+	_, err := c.Do("HSET", key, "appraisalDate", d)
+	check("HSET", err)
+	return err
+}
+
+func setAppraisal(i string, u string, a string) error {
+	c := pool.Get()
+	defer c.Close()
+	key := "mortgage:" + i + ":" + u
+	_, err := c.Do("HSET", key, "appraisal", a)
+	check("HSET", err)
 	return err
 }
 func initialize() {
@@ -347,17 +385,61 @@ func initialize() {
 		}
 	}
 
+	store.Options = &sessions.Options{MaxAge: 0}
 	pool = newPool(host, port, password)
 	setDefaultHouses()
 	setDefaultUsers()
+	setDefaultAddresses()
 }
 
 func getNewHouseID() string {
 	return uuid.NewV4().String()
 }
 
-func getUserID() string {
+func getUser(i string) User {
+	var user User
+	c := pool.Get()
+	defer c.Close()
+
+	key := "user:" + i
+	n, err := redis.Values(c.Do("HGETALL", key))
+	check("HGETALL", err)
+	err = redis.ScanStruct(n, &user)
+	check("ScanStruct", err)
+	return user
+}
+
+func getNewUserID() string {
 	return uuid.NewV4().String()
+}
+
+func createUser(u string) error {
+	c := pool.Get()
+	defer c.Close()
+
+	addresses, err := redis.Strings(c.Do("KEYS", "address:*"))
+	check("Strings", err)
+
+	var a Address
+	for _, v := range addresses {
+		n, err := redis.Values(c.Do("HGETALL", v))
+		check("HGETALL", err)
+		err = redis.ScanStruct(n, &a)
+		if a.Status == "Unassigned" {
+			_, err := c.Do("HMSET", v, "userID", u, "status", "Assigned")
+			check("HMSET", err)
+			key := "user:" + u
+			_, err = c.Do("HMSET", key, "id", u, "address", a.ID, "type", "User")
+			check("HMSET", err)
+			break
+		}
+	}
+
+	if getUser(u).Address == "" {
+		return fmt.Errorf(" - No addresses available for new user")
+	}
+	return err
+
 }
 
 func getHouse(i string) House {
@@ -381,11 +463,12 @@ func getBid(ID string) Bid {
 	check("HGETALL", err)
 	err = redis.ScanStruct(n, &bid)
 	check("ScanStruct", err)
+	bid.User = getUser(bid.UserID)
 	return bid
 }
 
 func getBids(filter string) []Bid {
-	bids:= make([]Bid, 0)
+	var bids []Bid
 
 	c := pool.Get()
 	defer c.Close()
@@ -426,7 +509,7 @@ func getMortgage(ID string) Mortgage {
 }
 
 func getMortgages(filter string) []Mortgage {
-	mortgages:= make([]Mortgage, 0)
+	var mortgages []Mortgage
 
 	c := pool.Get()
 	defer c.Close()
@@ -445,6 +528,31 @@ func getMyMortgages(u string) []Mortgage {
 	return getMortgages("*:" + u)
 }
 
+func getHouseMortgages(i string) []Mortgage {
+	return getMortgages(i + ":*")
+}
+
+func addressListHandler(w http.ResponseWriter, r *http.Request) {
+	c := pool.Get()
+	defer c.Close()
+
+	keys, err := redis.Strings(c.Do("KEYS", "address:*"))
+	check("Strings", err)
+
+	var a Address
+	var al AddressList
+	for _, k := range keys {
+		r, err := c.Do("HGETALL", k)
+		err = redis.ScanStruct(r.([]interface{}), &a)
+		check("ScanStruct", err)
+		if a.Status == "Assigned" {
+			al.Data = append(al.Data, a)
+		}
+	}
+	t, err := template.ParseFiles("templates/addressList.tmpl")
+	check("Parse template", err)
+	t.Execute(w, al)
+}
 func listingsHandler(w http.ResponseWriter, r *http.Request) {
 	var u string
 	session, err := store.Get(r, "BlockPartySession")
@@ -455,9 +563,17 @@ func listingsHandler(w http.ResponseWriter, r *http.Request) {
 
 	if _, ok := session.Values["user"]; ok {
 		u = session.Values["user"].(string)
+		user := getUser(u)
+		if user.ID == "" {
+			session.Options = &sessions.Options{MaxAge: 0}
+			err = createUser(u)
+			check("createUser", err)
+		}
 	} else {
-		u = getUserID()
+		u = getNewUserID()
 		session.Values["user"] = u
+		err = createUser(u)
+		check("createUser", err)
 	}
 
 	session.Save(r, w)
@@ -465,8 +581,8 @@ func listingsHandler(w http.ResponseWriter, r *http.Request) {
 	check("Parse template", err)
 	listings := newPayload()
 	listings.Houses = getHouses()
-	listings.User = u
-	check("Marshal",err)
+	listings.Users = append(listings.Users, getUser(u))
+	check("Marshal", err)
 	t.Execute(w, listings)
 }
 
@@ -490,7 +606,7 @@ func detailsHandler(w http.ResponseWriter, r *http.Request) {
 
 	var payload = newPayload()
 	payload.Houses = append(payload.Houses, h)
-	payload.User = u
+	payload.Users = append(payload.Users, getUser(u))
 	t, err := template.ParseFiles("templates/details.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
 	t.Execute(w, payload)
@@ -516,7 +632,8 @@ func listHouseHandler(w http.ResponseWriter, r *http.Request) {
 
 	var payload = newPayload()
 	payload.Houses = append(payload.Houses, h)
-	payload.User = u
+	payload.Users = append(payload.Users, getUser("Seller"))
+	payload.Users = append(payload.Users, getUser(u))
 	t, err := template.ParseFiles("templates/listHouse.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
 	t.Execute(w, payload)
@@ -536,7 +653,9 @@ func bidsHandler(w http.ResponseWriter, r *http.Request) {
 
 	payload := newPayload()
 	payload.Bids = getHouseBids(i)
-	payload.User = u
+	payload.Users = append(payload.Users, getUser(u))
+	payload.Users = append(payload.Users, getUser("Seller"))
+	payload.Houses = append(payload.Houses, getHouse(i))
 	t, err := template.ParseFiles("templates/bids.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
 	t.Execute(w, payload)
@@ -544,13 +663,12 @@ func bidsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func enterBidHandler(w http.ResponseWriter, r *http.Request) {
-	var u string
 	session, err := store.Get(r, "BlockPartySession")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	u = session.Values["user"].(string)
+	u := session.Values["user"].(string)
 
 	vars := mux.Vars(r)
 	i := vars["houseID"]
@@ -565,18 +683,17 @@ func enterBidHandler(w http.ResponseWriter, r *http.Request) {
 	defer c.Close()
 
 	key := "bid:" + i + ":" + u
-
-	_, err = c.Do("HMSET", key, "user", u, "amount", a, "houseID", i, "status", "Submitted")
+	_, err = c.Do("HMSET", key, "userID", u, "userAddress", getUser(u).Address, "amount", a, "houseID", i, "houseAddress", h.Contract, "status", "Submitted")
 	check("HMSET", err)
 
-	var payload = newPayload()
-	payload.User = u
-	payload.Bids = append(payload.Bids,getBid(key))
-	payload.Houses = append(payload.Houses, h)
-
-	t, err := template.ParseFiles("templates/myBid.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
-	check("Parse template", err)
-	t.Execute(w, payload)
+	http.Redirect(w, r, mainURL+"/house/"+i+"/myBid", http.StatusFound)
+//	var payload = newPayload()
+//	payload.Bids = append(payload.Bids, getBid(key))
+//	payload.Houses = append(payload.Houses, h)
+//	payload.Users = append(payload.Users, getUser(u))
+//	t, err := template.ParseFiles("templates/myBid.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
+//	check("Parse template", err)
+//	t.Execute(w, payload)
 }
 
 func enterListingHandler(w http.ResponseWriter, r *http.Request) {
@@ -589,7 +706,7 @@ func enterListingHandler(w http.ResponseWriter, r *http.Request) {
 	ap, err := strconv.ParseFloat(a, 64)
 	err = changeHousePrice(i, ap)
 	check("changeHousePrice", err)
-	err = changeHouseStatus(i, "listed")
+	err = changeHouseStatus(i, "Listed")
 	check("changeHouseStatus", err)
 
 	http.Redirect(w, r, mainURL+"/seller", http.StatusFound)
@@ -621,6 +738,30 @@ func enterMortgageHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, mainURL+"/myMortgages", http.StatusFound)
 }
 
+func updateMortgageAmountHandler(w http.ResponseWriter, r *http.Request) {
+	_, err := store.Get(r, "BlockPartySession")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	vars := mux.Vars(r)
+	i := vars["houseID"]
+	a := r.PostFormValue("amount")
+	a = strings.Replace(a, ",", "", -1)
+	a = strings.Replace(a, ".", "", -1)
+	um := r.PostFormValue("user")
+
+	c := pool.Get()
+	defer c.Close()
+
+	key := "mortgage:" + i + ":" + um
+
+	_, err = c.Do("HSET", key, "amount", a)
+	check("HSET", err)
+	http.Redirect(w, r, mainURL+"/lender", http.StatusFound)
+}
+
 func applyHandler(w http.ResponseWriter, r *http.Request) {
 	var u string
 	session, err := store.Get(r, "BlockPartySession")
@@ -639,7 +780,7 @@ func applyHandler(w http.ResponseWriter, r *http.Request) {
 	check("Parse template", err)
 	var payload = newPayload()
 	payload.Houses = append(payload.Houses, h)
-	payload.User = u
+	payload.Users = append(payload.Users, getUser(u))
 	t.Execute(w, payload)
 }
 
@@ -661,7 +802,7 @@ func mortgageHandler(w http.ResponseWriter, r *http.Request) {
 	check("Parse template", err)
 	var payload = newPayload()
 	payload.Houses = append(payload.Houses, h)
-	payload.User = u
+	payload.Users = append(payload.Users, getUser(u))
 	t.Execute(w, payload)
 }
 
@@ -684,7 +825,7 @@ func myBidHandler(w http.ResponseWriter, r *http.Request) {
 	check("Parse template", err)
 	var payload = newPayload()
 	payload.Houses = append(payload.Houses, house)
-	payload.User = u
+	payload.Users = append(payload.Users, getUser(u))
 	payload.Bids = append(payload.Bids, myBid)
 	t.Execute(w, payload)
 }
@@ -707,7 +848,38 @@ func inspectHandler(w http.ResponseWriter, r *http.Request) {
 	check("Parse template", err)
 	var payload = newPayload()
 	payload.Houses = append(payload.Houses, h)
-	payload.User = u
+	payload.Users = append(payload.Users, getUser(u))
+	t.Execute(w, payload)
+}
+
+func appraiseHandler(w http.ResponseWriter, r *http.Request) {
+	var u string
+	session, err := store.Get(r, "BlockPartySession")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	u = session.Values["user"].(string)
+
+	vars := mux.Vars(r)
+	i := vars["houseID"]
+	um := vars["user"]
+
+	var h House
+	h = getHouse(i)
+	t, err := template.ParseFiles("templates/appraise.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
+	check("Parse template", err)
+	var payload = newPayload()
+	mortgages := getHouseMortgages(i)
+
+	for _, m := range mortgages {
+		if m.User == um {
+			payload.Mortgages = append(payload.Mortgages, m)
+		}
+	}
+
+	payload.Houses = append(payload.Houses, h)
+	payload.Users = append(payload.Users, getUser(u))
 	t.Execute(w, payload)
 }
 
@@ -723,8 +895,33 @@ func lenderHandler(w http.ResponseWriter, r *http.Request) {
 	t, err := template.ParseFiles("templates/lender.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
 	var payload = newPayload()
+	payload.Houses = getHouses()
 	payload.Mortgages = getMortgages("*")
-	payload.User = u
+	payload.Users = append(payload.Users, getUser(u))
+	t.Execute(w, payload)
+}
+
+func scheduleAppraisalHandler(w http.ResponseWriter, r *http.Request) {
+	var u string
+	session, err := store.Get(r, "BlockPartySession")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	u = session.Values["user"].(string)
+
+	vars := mux.Vars(r)
+	i := vars["houseID"]
+	mu := vars["user"]
+
+	var h House
+	h = getHouse(i)
+	t, err := template.ParseFiles("templates/scheduleAppraisal.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
+	check("Parse template", err)
+	var payload = newPayload()
+	payload.Houses = append(payload.Houses, h)
+	payload.Users = append(payload.Users, getUser(u))
+	payload.Mortgages = append(payload.Mortgages, getMortgage("mortgage:"+i+":"+mu))
 	t.Execute(w, payload)
 }
 
@@ -748,7 +945,7 @@ func scheduleInspectionHandler(w http.ResponseWriter, r *http.Request) {
 	check("Parse template", err)
 	var payload = newPayload()
 	payload.Houses = append(payload.Houses, h)
-	payload.User = u
+	payload.Users = append(payload.Users, getUser(u))
 	t.Execute(w, payload)
 }
 
@@ -760,6 +957,30 @@ func enterInspectionAppointmentHandler(w http.ResponseWriter, r *http.Request) {
 	err := setInspectionDate(i, d)
 	check("setInspectionDate", err)
 	http.Redirect(w, r, mainURL+"/myMortgages", http.StatusFound)
+}
+
+func enterAppraisalAppointmentHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	i := vars["houseID"]
+	d := r.PostFormValue("date")
+	u := r.PostFormValue("user")
+
+	err := setAppraisalDate(i, u, d)
+	check("setAppraisalDate", err)
+	http.Redirect(w, r, mainURL+"/lender", http.StatusFound)
+}
+
+func enterAppraisalHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	i := vars["houseID"]
+	a := r.PostFormValue("amount")
+	a = strings.Replace(a, ",", "", -1)
+	a = strings.Replace(a, ".", "", -1)
+	u := r.PostFormValue("user")
+
+	err := setAppraisal(i, u, a)
+	check("setAppraisal", err)
+	http.Redirect(w, r, mainURL+"/appraiser", http.StatusFound)
 }
 
 func changeHouseStatusHandler(w http.ResponseWriter, r *http.Request) {
@@ -794,7 +1015,7 @@ func changeBidStatusHandler(w http.ResponseWriter, r *http.Request) {
 	if s == "Accepted" {
 		err := rejectOtherBids(i, u)
 		check("rejectOtherBids", err)
-		err = changeHouseStatus(i, "sold")
+		err = changeHouseStatus(i, "Sold")
 		check("changeHouseStatus", err)
 	}
 	http.Redirect(w, r, mainURL+"/seller", http.StatusFound)
@@ -838,6 +1059,28 @@ func checkMortgageStatusHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(response)
 }
 
+func appraiserHandler(w http.ResponseWriter, r *http.Request) {
+	var u string
+	session, err := store.Get(r, "BlockPartySession")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	u = session.Values["user"].(string)
+
+	t, err := template.ParseFiles("templates/appraiser.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
+	check("Parse template", err)
+	var payload = newPayload()
+	for _, m := range getMortgages("*") {
+		if m.AppraisalDate != "" {
+			payload.Mortgages = append(payload.Mortgages, m)
+			payload.Houses = append(payload.Houses, getHouse(m.HouseID))
+		}
+	}
+	payload.Users = append(payload.Users, getUser(u))
+	t.Execute(w, payload)
+}
+
 func inspectorHandler(w http.ResponseWriter, r *http.Request) {
 	var u string
 	session, err := store.Get(r, "BlockPartySession")
@@ -855,7 +1098,7 @@ func inspectorHandler(w http.ResponseWriter, r *http.Request) {
 			payload.Houses = append(payload.Houses, h)
 		}
 	}
-	payload.User = u
+	payload.Users = append(payload.Users, getUser(u))
 	t.Execute(w, payload)
 }
 func sellerHandler(w http.ResponseWriter, r *http.Request) {
@@ -871,7 +1114,8 @@ func sellerHandler(w http.ResponseWriter, r *http.Request) {
 	check("Parse template", err)
 	var payload = newPayload()
 	payload.Houses = getHouses()
-	payload.User = u
+	payload.Users = append(payload.Users, getUser("Seller"))
+	payload.Users = append(payload.Users, getUser(u))
 	t.Execute(w, payload)
 }
 
@@ -887,7 +1131,7 @@ func myBidsHandler(w http.ResponseWriter, r *http.Request) {
 	myBids := getMyBids(u)
 	var payload = newPayload()
 	payload.Bids = myBids
-	payload.User = u
+	payload.Users = append(payload.Users, getUser(u))
 
 	t, err := template.ParseFiles("templates/myBids.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
@@ -906,7 +1150,7 @@ func myMortgagesHandler(w http.ResponseWriter, r *http.Request) {
 	myMortgages := getMyMortgages(u)
 	var payload = newPayload()
 	payload.Mortgages = myMortgages
-	payload.User = u
+	payload.Users = append(payload.Users, getUser(u))
 
 	for _, m := range myMortgages {
 		payload.Houses = append(payload.Houses, getHouse(m.HouseID))
@@ -925,8 +1169,8 @@ func missingRequirementsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func resetHandler(w http.ResponseWriter, r *http.Request) {
-	keys:= make([]string, 0)
-	keys = append(keys, "house:", "bid:", "mortgage:", "users")
+	var keys []string
+	keys = append(keys, "house:", "bid:", "mortgage:", "address:", "user:")
 
 	c := pool.Get()
 	defer c.Close()
@@ -937,12 +1181,13 @@ func resetHandler(w http.ResponseWriter, r *http.Request) {
 		for _, v := range n {
 			_, err := c.Do("DEL", v)
 			check("DEL", err)
-			log.Print("Deleted key: " + v)
+			//log.Print("Deleted key: " + v)
 		}
 	}
 
 	setDefaultHouses()
 	setDefaultUsers()
+	setDefaultAddresses()
 	http.Redirect(w, r, mainURL, http.StatusFound)
 }
 
@@ -964,6 +1209,12 @@ func main() {
 	router.HandleFunc("/house/{houseID}/mortgage", mortgageHandler)
 	router.HandleFunc("/house/{houseID}/mortgage/{user}/changeStatus/{status}", changeMortgageStatusHandler)
 	router.HandleFunc("/house/{houseID}/mortgage/{user}/checkStatus", checkMortgageStatusHandler)
+	router.HandleFunc("/appraiser", appraiserHandler)
+	router.HandleFunc("/house/{houseID}/mortgage/{user}/scheduleAppraisal", scheduleAppraisalHandler)
+	router.HandleFunc("/house/{houseID}/mortgage/{user}/enterAppraisalAppointment", enterAppraisalAppointmentHandler)
+	router.HandleFunc("/house/{houseID}/mortgage/{user}/appraise", appraiseHandler)
+	router.HandleFunc("/house/{houseID}/mortgage/{user}/enterAppraisal", enterAppraisalHandler)
+	router.HandleFunc("/house/{houseID}/mortgage/{user}/updateAmount", updateMortgageAmountHandler)
 	router.HandleFunc("/house/{houseID}/inspect", inspectHandler)
 	router.HandleFunc("/myMortgages", myMortgagesHandler)
 	router.HandleFunc("/inspector", inspectorHandler)
@@ -975,6 +1226,7 @@ func main() {
 	router.HandleFunc("/house/{houseID}/bid/{user}/checkStatus", checkBidStatusHandler)
 	router.HandleFunc("/missingRequirements", missingRequirementsHandler)
 	router.HandleFunc("/reset", resetHandler)
+	router.HandleFunc("/addressList", addressListHandler)
 
 	http.Handle("/images/", http.FileServer(http.Dir("/app")))
 	http.Handle("/css/", http.FileServer(http.Dir("/app")))

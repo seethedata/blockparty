@@ -5,13 +5,13 @@
 	{{template "navbar" .}}
 	<div class="container-fluid">
 			<div class="center-block">
-				<div id="housePanel" class="panel {{range .Houses}}{{if eq .Status "sold"}}panel-default{{else}}panel-success{{end}}{{end}}">
+				<div id="housePanel" class="panel {{range .Houses}}{{if eq .Status "Sold"}}panel-default{{else}}panel-success{{end}}{{end}}">
 					<div class="panel-heading">
-						<h3 class="panel-title" id="panel-title">{{range .Houses}}{{.Name}}{{end}}</h3>
+						<h3 class="panel-title" id="panel-title">{{range .Houses}}{{.Address}}{{end}}</h3>
 					</div>
 					<div class="panel-body">
 						<div class="label label-success" id="forSale" 
-							style="visibility:{{range .Houses}}{{if eq .Status "sold"}}hidden{{else}}visible{{end}}{{end}}">For Sale!</div>
+							style="visibility:{{range .Houses}}{{if eq .Status "Sold"}}hidden{{else}}visible{{end}}{{end}}">For Sale!</div>
 						<div>
 							<div>
 								<img alt="house image" src="/images/{{range .Houses}}{{.Image}}{{end}}" 
@@ -23,20 +23,20 @@
 							<div><span class="glyphicon glyphicon-bed" id="bedrooms"></span> {{range .Houses}}{{.Bedrooms}}{{end}} bedrooms</div>
 							<div><span class="glyphicon glyphicon-scale" id="bathrooms"></span> {{range .Houses}}{{.Bathrooms}}{{end}} bathrooms</div>
 						</div>
-						<input type="hidden" value="{{.User}}" id="bidUser"/>
+						<input type="hidden" value="{{range .Users}}{{if eq .Type "User"}}{{.ID}}{{end}}{{end}}" id="bidUser"/>
 						<div class="col-xs-12 text-center bidInfo" id="price" 
-						 	style="visibility:{{range .Houses}}{{if eq .Status "sold"}}hidden{{else}}visible{{end}}{{end}}">
+						 	style="visibility:{{range .Houses}}{{if eq .Status "Sold"}}hidden{{else}}visible{{end}}{{end}}">
 						<script>
 							price={{range .Houses}}{{.Price}}{{end}}
-							document.write("Asking Price: $" + price.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,'));
+							document.write("Asking Price: $" + formatAmount(price));
 						</script>
 						</div>
 					{{range .Houses}}
-						{{if ne .Status "sold"}}
+						{{if ne .Status "Sold"}}
 						<div class="form-group">
 							<div class="input-group bidInfo" >
 								<span class="input-group-addon">$</span>
-								<input type="text" id="bidAmount" class="form-control" placeholder="Bid Amount" onKeyUp="formatBid();"/>
+								<input type="text" id="bidAmount" class="form-control" placeholder="Bid Amount" onKeyUp="formatInput(this);"/>
 								<span class="input-group-btn">
 									<input id="bidButton" type="button" class="btn btn-success" value="Bid" onClick="bidOnHouse('{{.ID}}');"/>
 								</span>
@@ -55,7 +55,7 @@
 			    <div class="modal-content">
 			      <div class="modal-header">
 			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-				<h4 class="modal-title" id="modal-title">History for {{range .Houses}}{{.Name}}{{end}}</h4>
+				<h4 class="modal-title" id="modal-title">History for {{range .Houses}}{{.Address}}{{end}}</h4>
 			      </div>
 			      <div class="modal-body">
 			       	<div>2016-12-12 11:59:22 - House listed</div> 
@@ -72,39 +72,20 @@
 			    </div><!-- /.modal-content -->
 			  </div><!-- /.modal-dialog -->
 			</div><!-- /.modal -->
-			<div id="user" style="display: none" class="col-xs-12 text-center">User: {{.User}}</div>
+			<div id="user" style="display: none" class="col-xs-12 text-center">User: {{range .Users}}{{if eq .Type "User"}}{{.ID}}{{end}}{{end}}</div>
 	</div>
     </body>
     <script>
-	
-	function formatBid() {
-    		var selection = window.getSelection().toString();
-    		if ( selection !== '' ) {
-        		return;
-    		}
- 
-    		if ( $.inArray( event.keyCode, [38,40,37,39] ) !== -1 ) {
-        		return;
-    		}
-
-		var input = $("#bidAmount").val();
- 
-		var input = input.replace(/[\D\s\._\-]+/g, "");
- 
-		input = input ? parseInt( input, 10 ) : 0;
- 
-		$("#bidAmount").val( function() {
-    			return ( input === 0 ) ? "" : input.toLocaleString( "en-US" );
-		} );
- 
-	}
-
 	function showUser() {
 		$("#user").toggle();
 	}
 
 	function bidOnHouse(houseID) {
 		bidAmount=$("#bidAmount").val();
+		bidAmount=parseInt(bidAmount.replace(",","").replace(".",""));
+		userContract="0x7da0bfcc195a8f021cd5f3175014c1d57b094f26";
+		callHousePlaceBid({{range .Houses}}{{.Contract}}{{end}},bidAmount,userContract);
+
 		parameters={"bidAmount":bidAmount};
 
 		var form = $('<form></form>');

@@ -18,7 +18,7 @@
 			{{range .Bids}}
 				<tr onClick="showMyBid('{{.HouseID}}');">
 					<td><a>{{.HouseID}}</a></td>
-					<td>$<script>document.write(({{.Amount}}).toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,')); </script></td>
+					<td>$<script>document.write(formatAmount({{.Amount}})); </script></td>
 					<td>{{.Status}}</td>
 				</tr>
 			{{end}}

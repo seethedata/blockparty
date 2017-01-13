@@ -5,8 +5,8 @@
 	{{template "navbar" .}}
 	<div class="container-fluid">
 		{{range .Houses}}
-		<h2 class="text-center" id="message">Mortgage Application for {{.Name}}</h2>
-		<div class="radio well">
+		<h2 class="text-center" id="message">Mortgage Application for {{.Address}}</h2>
+		<div class="radio text-center well">
 			<h4>Select lender:</h4>
 			<div>
 			<img src="/images/star.png"/ style="height:9em ; width:9em" onClick="selectLender('1');">
@@ -29,42 +29,21 @@
 		<div class="form-group">
 			<div class="input-group" >
 				<span class="input-group-addon">$</span>
-				<input type="text" id="amount" class="form-control" placeholder="Mortgage Amount" onKeyUp="formatBid();"/>
-			</div>
-		</div>
-		<div class="well" id="buttons">
-			<div class="text-center">
-				<input id="inspect" type="button" class="btn btn-primary" value="Apply For Mortgage" onClick="apply('{{.ID}}');"/>
+				<input type="text" id="amount" class="form-control" placeholder="Mortgage Amount" onKeyUp="formatInput(this);"/>
+				<span class="input-group-btn">
+					<input id="applyButton" type="button" class="btn btn-primary" value="Apply" onClick="apply('{{.ID}}','{{.Contract}}');"/>
+				</span>
 			</div>
 		</div>
 		{{end}}
 	</div>
     </body>
     <script>
-	function formatBid() {
-    		var selection = window.getSelection().toString();
-    		if ( selection !== '' ) {
-        		return;
-    		}
- 
-    		if ( $.inArray( event.keyCode, [38,40,37,39] ) !== -1 ) {
-        		return;
-    		}
-
-		var input = $("#amount").val();
- 
-		var input = input.replace(/[\D\s\._\-]+/g, "");
- 
-		input = input ? parseInt( input, 10 ) : 0;
- 
-		$("#amount").val( function() {
-    			return ( input === 0 ) ? "" : input.toLocaleString( "en-US" );
-		} );
-	}
-
-	function apply(houseID) {
+	function apply(houseID,c) {
 		amount=$("#amount").val();
+		amount=parseInt(amount.replace(",","").replace(".",""));
 		l=$("input[name=lender]").val();
+
 		parameters={"amount":amount,"lender":l};
 
 		var form = $('<form></form>');

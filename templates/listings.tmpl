@@ -15,10 +15,6 @@
 	<script>
 		$("#pathfinder").show();
 		$("#listings").show();
-		$(".price").each(function(i){
-			var val=parseFloat($(this).text());
-			$(this).text("$" + val.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,'));
-		});
 
     		function showDetails(houseID) {
 			window.location={{.URL}}+"/house/"+houseID;
