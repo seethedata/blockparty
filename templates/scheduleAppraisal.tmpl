@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+{{template "head" .}}
+    <body>
+	{{template "navbar" .}}
+	<div class="container-fluid">
+		{{range .Houses}}
+		<h2 class="text-center" id="message">Schedule Appraisal for {{.Address}}</h2>
+		{{end}}
+		<div class="input-group">
+			<span class="input-group-addon"><span class="glyphicon glyphicon glyphicon-calendar"></span></span>
+			<input type="text" class="form-control" id="dateField" placeholder="Enter Appraisal Date"/>
+		</div>
+		<div class="well text-center">
+		{{range .Mortgages}}
+			<input type="button" class="btn btn-primary" value="Schedule Appraisal"/ onClick="schedule('{{.HouseID}}','{{.User}}');" />
+		</div>
+		{{end}}
+	</div>
+    </body>
+    <script>
+	mainURL={{.URL}};
+{{range .Houses}}
+	houseID={{.ID}};
+{{end}}
+
+	function schedule(i,u) {
+		appointmentDate=$("#dateField").val();
+		parameters={"date":appointmentDate,"user":u};
+
+		var form = $('<form></form>');
+    		form.attr("method", "post");
+		form.attr("action", {{.URL}} + "/house/" + houseID + "/mortgage/" + u + "/enterAppraisalAppointment");
+
+    		$.each(parameters, function(key, value) {
+        		var field = $('<input></input>');
+
+        		field.attr("type", "hidden");
+        		field.attr("name", key);
+        		field.attr("value", value);
+
+        		form.append(field);
+		});
+		$(document.body).append(form);
+    		form.submit();
+
+	}	
+
+	$("#dateField").datepicker({minDate: 7 , dateFormat: "yy-mm-dd"});	
+    </script>
+</html>

@@ -1,0 +1,23 @@
+{{define "housePanel"}}	
+	<div class="col-md-4">
+		<div class="panel {{if eq .Status "Sold"}}panel-primary{{else}}panel-success{{end}}">
+			<div class="panel-heading">
+				<h3 class="panel-title">{{.Address}}</h3>
+			</div>
+			<div class="panel-body">	
+				<a onClick="showDetails('{{.ID}}');">
+					<span style="{{if eq .Status "Sold"}}visibility:hidden{{else}}visibility:visible{{end}}" class="label label-success">
+						For Sale!
+					</span>
+					<img src="/images/{{.Image}}" class="houseImage center-block"/>
+					<div class="text-center" style="visibility:{{if eq .Status "Sold"}}hidden{{else}}visible{{end}}">$
+						<script>document.write(formatAmount({{.Price}}));</script>
+					</div>
+					<div>
+						<input type="button" class="btn center-block {{if eq .Status "Sold"}}btn-primary{{else}}btn-success{{end}}" value="View Listing" onClick="showDetails('{{.ID}}');"/>
+					</div>
+				</a>
+			</div>
+		</div>
+	</div>
+{{end}}

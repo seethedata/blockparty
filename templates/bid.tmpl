@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+{{template "head" .}}
+    <body>
+	 {{template "navbar" .}}
+	<div class="container-fluid">
+		<h4 class="text-center" id="message">{{.Message}}</h4>
+		<div class="well">
+			<div class="text-center">
+			<input id="return" type="button" class="btn btn-primary" value="View My Bids" onClick="showMyBids();"/>
+			<input id="return" type="button" class="btn btn-primary" value="Return to Listings" onClick="returnToListings();"/>
+			</div>
+		</div>
+	</div>
+    </body>
+    <script>
+	mainURL={{.URL}};
+
+	function showMyBids() {
+    		window.location=mainURL + "/myBids";
+	}
+
+	function returnToListings() {
+    		window.location=mainURL;
+	}
+    </script>
+</html>

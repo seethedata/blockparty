@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+{{template "head" .}}
+    <body>
+	{{template "navbar" .}}
+	<div class="container-fluid">
+		<h2 class="text-center" id="title">Scheduled Appraisals</h2>
+		<div id="AppraisalTable">
+			<table class="table table-striped">
+			<thead>
+				<tr>
+					<th>Address</th>
+					<th>House ID</th>
+					<th class="text-center">Appraisal</th>
+				</tr>
+			</thead>
+			<tbody id="tableData">
+			{{$houses:=.Houses}}
+			{{range .Mortgages}}
+				{{$i:=.HouseID}}
+				<tr>
+					<td>{{range $houses}}{{if eq $i .ID}}{{.Address}}{{end}}{{end}}</td>
+					<td>{{.HouseID}}</td>
+					{{if .Appraisal}}
+						<td><script>document.write(formatAmount({{.Appraisal}}));</script></td>
+					{{else}}
+					<td><input type="button" class="btn btn-primary center-block" value="Appraise" onClick="appraise('{{.HouseID}}','{{.User}}');"/></td>
+					{{end}}
+				</tr>
+			{{end}}
+			</tbody>
+			</table>
+		</div>
+	</div>
+    </body>
+    <script>
+	function appraise(i,u) {
+		window.location={{.URL}} + "/house/" + i + "/mortgage/" + u + "/appraise";
+	}
+
+    </script>
+</html>

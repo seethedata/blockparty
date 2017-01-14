@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+{{template "head" .}}
+    <body>
+	{{template "navbar" .}}
+	<div class="container-fluid">
+			<div class="center-block">
+				<div id="housePanel" class="panel {{range .Houses}}{{if eq .Status "Sold"}}panel-default{{else}}panel-success{{end}}{{end}}">
+					<div class="panel-heading">
+						<h3 class="panel-title" id="panel-title">{{range .Houses}}{{.Address}}{{end}}</h3>
+					</div>
+					<div class="panel-body">
+						<div class="label label-success" id="forSale" 
+							style="visibility:{{range .Houses}}{{if eq .Status "Sold"}}hidden{{else}}visible{{end}}{{end}}">For Sale!</div>
+						<div>
+							<div>
+								<img alt="house image" src="/images/{{range .Houses}}{{.Image}}{{end}}" 
+									id="houseImage" class="houseImage center-block">
+							</div>
+							<div class="description" id="description">{{range .Houses}}{{.Description}}{{end}}</div>
+						</div>
+						<div>
+							<div><span class="glyphicon glyphicon-bed" id="bedrooms"></span> {{range .Houses}}{{.Bedrooms}}{{end}} bedrooms</div>
+							<div><span class="glyphicon glyphicon-scale" id="bathrooms"></span> {{range .Houses}}{{.Bathrooms}}{{end}} bathrooms</div>
+						</div>
+						<div class="form-group">
+							<div class="input-group" >
+								<span class="input-group-addon">$</span>
+								<input type="text" id="askingPrice" class="form-control" placeholder="Asking Price" onKeyUp="formatInput(this,'#listButton');"/>
+								<span class="input-group-btn">
+									<input id="listButton" type="button" class="btn btn-success" value="List" onClick="listHouse('{{range .Houses}}{{.ID}}{{end}}')" />
+								</span>
+							</div>
+						</div>
+						<div class="form-group">
+							<input type="button" class="form-control btn btn-primary" data-toggle="modal" data-target="#historyModal" value="View History"/>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="modal fade" tabindex="-1" role="dialog" id="historyModal">
+			  <div class="modal-dialog" role="document">
+			    <div class="modal-content">
+			      <div class="modal-header">
+			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" id="modal-title">History for {{range .Houses}}{{.Address}}{{end}}</h4>
+			      </div>
+			      <div class="modal-body">
+			       	<div>2016-12-12 11:59:22 - House listed</div> 
+				<div class="glyphicon glyphicon-arrow-down"></div>
+			       	<div>2016-12-12 22:14:07 - House verified</div> 
+				<div class="glyphicon glyphicon-arrow-down"></div>
+				<div>2016-12-14 08:21:39 - Bid recevied from user</div> 
+				<div class="glyphicon glyphicon-arrow-down"></div>
+				<div>2016-12-16 14:45:13 - Bid recevied from user2</div> 
+			      </div>
+			      <div class="modal-footer">
+			        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+			      </div>
+			    </div><!-- /.modal-content -->
+			  </div><!-- /.modal-dialog -->
+			</div><!-- /.modal -->
+			<div id="user" style="display: none" class="col-xs-12 text-center">User: {{range .Users}}{{if eq .Type "User"}}{{.ID}}{{end}}{{end}}</div>
+	</div>
+    </body>
+    <script>
+	function listHouse(houseID) {
+		askingPrice=$("#askingPrice").val();
+		askingPrice=parseInt(askingPrice.replace(",","").replace(".",""));
+		if ($.isNumeric(askingPrice)) {
+			callHouseForSale('{{range .Houses}}{{.Contract}}{{end}}', askingPrice,'{{range .Users}}{{if eq .Type "System"}}{{.Address}}{{end}}{{end}}');
+			parameters={"askingPrice":askingPrice};
+	
+			var form = $('<form></form>');
+	    		form.attr("method", "post");
+			form.attr("action", {{.URL}} + "/house/" + houseID + "/enterListing");
+	
+	    		$.each(parameters, function(key, value) {
+	        		var field = $('<input></input>');
+	
+	        		field.attr("type", "hidden");
+	        		field.attr("name", key);
+	        		field.attr("value", value);
+	
+	        		form.append(field);
+			});
+			$(document.body).append(form);
+	    		form.submit();
+		} else {
+			alert("Please enter an asking price.");
+		}
+	}
+    </script>
+</html>
+

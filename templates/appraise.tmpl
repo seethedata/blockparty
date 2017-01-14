@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+{{template "head" .}}
+    <body>
+	{{template "navbar" .}}
+	<div class="container-fluid">
+		{{range .Houses}}
+			<h2 class="text-center" id="message">Appraisal for {{.Address}}</h2>
+			<img src="/images/{{.Image}}" alt="House Photo" class="center-block"/ style="height: 9em ; width: 9em">
+		{{end}}
+			<div class="form-group">
+			<input type="button" id="auto" class="btn btn-primary text-center" value="Auto Appraise" onClick="autoAppraise();"/>
+			</div>
+			<div class="form-group">
+				<div class="input-group appraiseInfo" >
+					<span class="input-group-addon">$</span>
+					<input type="text" id="appraiseAmount" class="form-control" placeholder="Appraisal Amount" onKeyUp="formatInput(this,'#appraiseButton');"/>
+					<span class="input-group-btn">
+		{{$houses:=.Houses}}
+		{{range .Mortgages}}
+		{{$houseID:=.HouseID}}
+			<input id="appraiseButton" type="button" class="btn btn-success" value="Enter" onClick="enterAppraisal('{{.HouseID}}','{{.User}}','{{range $houses}}{{if eq .ID $houseID}}{{.Contract}}{{end}}{{end}}');"/>
+		{{end}}
+					</span>
+				</div>
+			</div>
+	</div>
+    </body>
+    <script>
+	function enterAppraisal(i,u,c) {
+		amount=$("#appraiseAmount").val();
+		amount=parseInt(amount.replace(",","").replace(".",""));
+		if ($.isNumeric(amount)) {
+			callHouseAppraisal(c,amount);
+			parameters={"amount":amount,"user":u};
+	
+			var form = $('<form></form>');
+	    		form.attr("method", "post");
+			form.attr("action", {{.URL}} + "/house/" + i + "/mortgage/" + u + "/enterAppraisal");
+	
+	    		$.each(parameters, function(key, value) {
+	        		var field = $('<input></input>');
+	
+	        		field.attr("type", "hidden");
+	        		field.attr("name", key);
+	        		field.attr("value", value);
+	
+	        		form.append(field);
+			});
+			$(document.body).append(form);
+	    		form.submit();
+		} else {
+			alert("Please enter an appraisal amount.");
+		}
+	}
+
+	function autoAppraise() {
+		amount=formatAmount({{range .Houses}}{{.Price}}{{end}});
+		amount=amount.replace(/\.00$/,"");
+		$("#appraiseAmount").val(amount);
+	}
+    </script>
+</html>

@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+{{template "head" .}}
+    <body>
+	{{template "navbar" .}}
+	<div class="container-fluid">
+		<h2 class="text-center" id="title">Mortgage Applications</h2>
+		<div id="bidTable">
+			<table class="table table-striped">
+			<thead>
+				<tr>
+					<th>House ID</th>
+					<th>User ID</th>
+					<th>Mortgage Amount</th>
+					<th class="text-center">Appraisal</th>
+					<th colspan="2" class="text-center">Action</th>
+				</tr>
+			</thead>
+			<tbody id="tableData">
+			{{$houses:=.Houses}}
+			{{range .Mortgages}}
+			{{$houseID:=.HouseID}}
+				<tr>
+					<td>{{.HouseID}}</td>
+					<td>{{.User}}</td>
+					<td>$<script>document.write(formatAmount({{.Amount}})); </script></td>
+					<td class="text-center">
+						{{if .Appraisal}}
+							$<script>document.write(formatAmount({{.Appraisal}}));</script>
+						{{else}}
+							{{if .AppraisalDate}}
+								{{.AppraisalDate}}
+							{{else}}
+								<input type="button" class="btn btn-primary center-block" value="Schedule" onClick="scheduleAppraisal('{{.HouseID}}','{{.User}}');"/></td>
+							{{end}}
+						{{end}}
+					</td>
+					{{if and (eq .Status "Submitted") (.Appraisal)}}
+						{{if gt .Amount .Appraisal}}
+							<td><input type="button" class="btn btn-primary center-block" value="Override" onClick="override('{{.HouseID}}','{{.User}}','{{range $houses}}{{if eq .ID $houseID}}{{.Contract}}{{end}}{{end}}');"/></td>
+						{{else}}
+							<td><input type="button" class="btn btn-success center-block" value="Accept" onClick="acceptMortgage('{{.HouseID}}','{{.User}}','{{range $houses}}{{if eq .ID $houseID}}{{.Contract}}{{end}}{{end}}','{{.Amount}}');"/></td>
+						{{end}}
+						<td><input type="button" class="btn btn-danger center-block" value="Reject" onClick="rejectMortgage('{{.HouseID}}','{{.User}}','{{range $houses}}{{if eq .ID $houseID}}{{.Contract}}{{end}}{{end}}');"/></td>
+					{{else}}
+						<td style="color:#9A9A9A" class="text-center" colspan="2">{{.Status}}</td>
+					{{end}}
+				</tr>
+			{{end}}
+			</tbody>
+			</table>
+		</div>
+	</div>
+	<div class="modal fade" tabindex="-1" role="dialog" id="overrideModal">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+			       		<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title" id="modal-title">Override Mortgage Amount</h4>
+			      	</div>
+			      	<div class="modal-body">
+					<div class="form-group">
+						<div class="input-group appraiseInfo" >
+							<span class="input-group-addon">$</span>
+							<input type="text" id="overrideAmount" class="form-control" placeholder="Mortgage Amount" onKeyUp="formatInput(this,'#overrideButton');"/>
+							<span class="input-group-btn">
+								<input id="overrideButton" type="button" class="btn btn-success" value="Override"/>
+							</span>
+						</div>
+					</div>
+			      	</div>
+			      	<div class="modal-footer">
+			       		<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+			      	</div>
+			</div><!-- /.modal-content -->
+		  </div><!-- /.modal-dialog -->
+	</div><!-- /.modal -->
+    </body>
+    <script>
+	var b={{range .Mortgages}}{{.Appraisal}}{{end}};
+	function scheduleAppraisal(i,u) {
+		window.location={{.URL}} + "/house/" + i + "/mortgage/" + u + "/scheduleAppraisal";
+	}
+
+	function acceptMortgage(i,u,c,a) {
+		callHouseApplyMortgage(c,a);
+		window.location={{.URL}} + "/house/" + i + "/mortgage/" + u + "/changeStatus/Accepted";
+	}
+
+
+	function rejectMortgage(i,u) {
+		window.location={{.URL}} + "/house/" + i + "/mortgage/" + u + "/changeStatus/Rejected";
+	}
+
+	function override(i,u,c){
+		$("#overrideButton").attr("onClick","overrideMortgageAmount('" + i + "','" + u + "','" + c + "');");
+		$("#overrideModal").modal("show");
+	}
+
+	function overrideMortgageAmount(i,u,c) {
+		amount=$("#overrideAmount").val();
+		amount=parseInt(amount.replace(",","").replace(".",""));
+		if ($.isNumeric(amount)) {
+			callHouseChangeMortgageValue(c,amount);
+			parameters={"amount":amount,"user":u};
+	
+			var form = $('<form></form>');
+	    		form.attr("method", "post");
+			form.attr("action", {{.URL}} + "/house/" + i + "/mortgage/" + u + "/updateAmount");
+	
+	    		$.each(parameters, function(key, value) {
+	        		var field = $('<input></input>');
+	
+	        		field.attr("type", "hidden");
+	        		field.attr("name", key);
+	        		field.attr("value", value);
+	
+	        		form.append(field);
+			});
+			$(document.body).append(form);
+	    		form.submit();
+		} else {
+			alert("Please enter an override amount.");
+		}
+	}
+    </script>
+</html>

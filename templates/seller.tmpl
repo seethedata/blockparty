@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+{{template "head" .}}
+    <body>
+	{{template "navbar" .}}
+	<h2 style="display:none" class="text-center" id="url">{{.URL}}</h2>
+	<img alt="Pathfinder Logo" class="center-block" src="/images/Pathfinder-Logo.png" onClick="$('#url').toggle();"/>
+	<div id="listings" class="container-fluid">
+		<div id="houses">
+		{{range .Houses}}
+			<div class="col-md-4">
+				<div class="panel {{if eq .Status "Sold"}}panel-primary{{else}}panel-success{{end}}">
+					<div class="panel-heading">
+						<h3 class="panel-title">{{.Address}}</h3>
+					</div>
+					<div class="panel-body">
+						<span class="label label-success" style="{{if eq .Status "Sold"}}visibility:hidden{{else}}visibility:visibile{{end}}">For Sale!</span>
+						<img src="/images/{{.Image}}" class="houseImage center-block"/>
+						<div class="text-center" style="visibility:{{if eq .Status "Sold"}}hidden{{else}}visible{{end}}">$
+							<script>document.write(formatAmount({{.Price}}));</script>
+						</div>
+						<div>
+						{{if eq .Status "Sold"}}
+							<input type="button" class="btn btn-primary center-block" value="List House" onClick="listHouse('{{.ID}}');"/>
+						{{else}}
+							<div class="text-center">
+								<input type="button" class="btn btn-success" value="View Bids" onClick="showBids('{{.ID}}');"/>
+								<input type="button" class="btn btn-primary" value="Delist House" onClick="delistHouse('{{.ID}}','{{.Contract}}');"/>
+							</div>
+						{{end}}
+						</div>
+						<div>
+						</div>
+					</div>
+				</div>
+			</div>
+		{{end}}
+		</div>
+	</div>
+    </body>
+    <script>
+	
+    	function showBids(ID) {
+		window.location={{.URL}} +"/house/" + ID + "/bids";
+	}
+
+    	function listHouse(ID) {
+		window.location={{.URL}} +"/house/" + ID + "/listHouse";
+	}
+
+    	function delistHouse(ID, contract) {
+		callHouseNotForSale(contract,'{{range .Users}}{{if eq .Type "System"}}{{.Address}}{{end}}{{end}}');
+		window.location={{.URL}} + "/house/" + ID + "/changeStatus/Sold";
+	}
+
+    </script>
+</html>

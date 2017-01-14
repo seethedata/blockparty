@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+{{template "head" .}}
+    <body>
+    <script>
+	function getLender(n) {
+		if (n == "1") {
+			return "Mortgage Star";
+		} else if (n == "2") {
+			return "Lending Storm";
+		} else if (n == "3") {
+			return "GreenCents";
+		}
+	}
+    </script>
+	{{template "navbar" .}}
+	<div class="container-fluid">
+		<h2 class="text-center" id="title">My Mortgages</h2>
+		<div id="mortgageTable">
+			<table class="table table-striped">
+			<thead>
+				<tr>
+				<th>House ID</th>
+				<th>Amount</th>
+				<th>Lender</th>
+				<th>Status</th>
+				</tr>
+			</thead>
+			<tbody id="tableData">
+			{{$houses:= .Houses}}
+			{{range .Mortgages}}
+				<tr onClick="showMyMortgage('{{.HouseID}}');">
+					<td><a>{{.HouseID}}</a></td>
+					<td>$<script>document.write(formatAmount({{.Amount}})); </script></td>
+					<td><script>document.write(getLender({{.Lender}}));</script></td>
+					<td>{{.Status}}</td>
+			{{end}}
+				</tr>
+			</tbody>
+			</table>
+		</div>
+	</div>
+    </body>
+    <script>
+	function showMyMortgage(houseID) {
+		window.location={{.URL}} + "/house/" + houseID + "/mortgage/myMortgage";
+	}
+
+    </script>
+</html>

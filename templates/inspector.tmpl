@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+{{template "head" .}}
+    <body>
+	{{template "navbar" .}}
+	<div class="container-fluid">
+		<h2 class="text-center" id="title">Scheduled Inspections</h2>
+		<div id="bidTable">
+			<table class="table table-striped">
+			<thead>
+				<tr>
+					<th>Address</th>
+					<th>House ID</th>
+					<th>Rating</th>
+				</tr>
+			</thead>
+			<tbody id="tableData">
+			{{range .Houses}}
+				<tr>
+					<td>{{.Address}}</td>
+					<td>{{.ID}}</td>
+					{{if eq .Quality 0}}
+					<td><input type="button" class="btn btn-success center-block" value="Inspect" onClick="inspect('{{.ID}}');"/></td>
+					{{else}}
+						<td style="color:#9A9A9A" class="text-center"><script>document.write(setRating('{{.Quality}}'));</script></td>
+					{{end}}
+				</tr>
+			{{end}}
+			</tbody>
+			</table>
+		</div>
+	</div>
+    </body>
+    <script>
+	function inspect(i) {
+		window.location={{.URL}} + "/house/" + i + "/inspect";
+	}
+
+	function setRating(q) {
+		var ret="";
+		if (q == "1") {
+			ret="Very Poor";
+		} else if (q == "2") {
+			ret="Poor";
+		} else if (q == "3") {
+			ret="Fair";
+		} else if (q == "4") {
+			ret="Good";
+		} else if (q == "5") {
+			ret="Excellent";
+		}
+		return ret;
+	}
+    </script>
+</html>
+	}
+    </script>
+</html>

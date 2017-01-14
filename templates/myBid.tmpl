@@ -1,0 +1,66 @@
+<!doctype html>
+<html>
+{{template "head" .}}
+    <body>
+	{{template "navbar" .}}
+	<div class="container-fluid">
+		<div class="center-block">
+			<img alt="house image" src="/images/{{range .Houses}}{{.Image}}{{end}}" id="houseImage" class="houseImage center-block" onClick="showUser();"/>
+		</div>
+		<h2 id="message" class="text-center"></h2>
+		<div class="well" id="buttons" style="display:none">
+			<div class="text-center">
+		{{range .Bids}}
+				<input id="apply" type="button" class="btn btn-primary" style="display:none" value="Apply for Mortgage" onClick="applyForMortgage({{.HouseID}});"/>
+		{{end}}
+				<input id="return" type="button" class="btn btn-primary" value="Return to Listings" onClick="returnToListings();"/>
+			</div>
+		</div>
+	</div>
+    </body>
+    <script>
+	mainURL={{.URL}};
+
+	{{range .Bids}}
+	function updateStatus(){
+		$.getJSON(mainURL + "/house/" + {{ .HouseID }} + "/bid/" + {{.UserID}} + "/checkStatus",{ts:Date.now()},handleStatus);
+	}
+
+	function setMessage(s) {
+		if (s == "Accepted") {
+			message="Congratulations! Your bid has been accepted!";
+			$("#buttons").show();
+			$("#apply").show();
+		} else if (s == "Rejected") {
+			message="The seller has accepted another bid.";
+			$("#buttons").show();
+		} else {
+			message="You have bid $" + formatAmount({{.Amount}}) + " for this house.";
+		}
+		$("#message").html(message);
+	}
+
+	setMessage({{.Status}});
+
+	{{end}}
+
+	function handleStatus(data) {
+		s=data.status;
+		setMessage(s);
+		if (s != "Submitted") {
+			clearInterval(interval);
+		}
+	}
+
+	interval=setInterval(updateStatus,5000);
+
+	function applyForMortgage(i) {
+    		window.location=mainURL + "/house/" + i + "/applyForMortgage";
+	}
+
+	function returnToListings() {
+    		window.location=mainURL;
+	}
+	
+    </script>
+</html>

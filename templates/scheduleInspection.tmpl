@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+{{template "head" .}}
+    <body>
+	{{template "navbar" .}}
+	<div class="container-fluid">
+		{{range .Houses}}
+		<h2 class="text-center" id="message">Schedule Inspection for {{.Address}}</h2>
+		<div class="input-group">
+			<span class="input-group-addon"><span class="glyphicon glyphicon glyphicon-calendar"></span></span>
+			<input type="text" class="form-control" id="dateField" placeholder="Enter Inspection Date"/>
+		</div>
+		<div class="well text-center">
+				<input type="button" class="btn btn-primary" value="Schedule Inspection"/ onClick="schedule('{{.ID}}');" />
+		</div>
+		{{end}}
+	</div>
+    </body>
+    <script>
+	mainURL={{.URL}};
+{{range .Houses}}
+	houseID={{.ID}};
+{{end}}
+
+	function schedule(i) {
+		appointmentDate=$("#dateField").val();
+		parameters={"date":appointmentDate};
+
+		var form = $('<form></form>');
+    		form.attr("method", "post");
+		form.attr("action", {{.URL}} + "/house/" + houseID + "/enterInspectionAppointment");
+
+    		$.each(parameters, function(key, value) {
+        		var field = $('<input></input>');
+
+        		field.attr("type", "hidden");
+        		field.attr("name", key);
+        		field.attr("value", value);
+
+        		form.append(field);
+		});
+		$(document.body).append(form);
+    		form.submit();
+
+	}	
+
+	$("#dateField").datepicker({minDate: 7 , dateFormat: "yy-mm-dd"});	
+    </script>
+</html>

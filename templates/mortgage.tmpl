@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+{{template "head" .}}
+    <body>
+	{{template "navbar" .}}
+	<div class="container-fluid">
+		{{range .Houses}}
+		<h2 class="text-center" id="message">Mortgage Information for {{.Address}}</h2>
+		<div class="well" id="buttons" >
+			<div class="text-center">
+				<input id="inspect" type="button" class="btn btn-primary" value="Schedule Appraisal" onClick="scheduleAppraisal('{{.ID}}');"/>
+			</div>
+		</div>
+		{{end}}
+	</div>
+    </body>
+    <script>
+	function scheduleAppraisal(i) {
+		window.location={{.URL}} + "/house/" + i + "/scheduleAppraisal";
+	}
+    </script>
+</html>
