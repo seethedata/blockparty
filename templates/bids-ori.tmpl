@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+{{template "head" .}}
+    <body>
+	{{template "navbar" .}}
+	<div class="container-fluid">
+		<h2 class="text-center" id="title">Bids for {{range .Houses}}{{.Address}}{{end}}</h2>
+		<div id="bidTable">
+			<table class="table table-striped">
+			<thead>
+				<tr>
+					<th>User</th>
+					<th>House ID</th>
+					<th>Bid</th>
+					<th colspan="2" class="text-center">Action</th>
+				</tr>
+			</thead>
+			<tbody id="tableData">
+			{{range .Bids}}
+				<tr>
+					<td>{{.UserID}}</td>
+					<td>{{.HouseID}}</td>
+					<td>$<script>document.write(formatAmount({{.Amount}})); </script></td>
+					{{if eq .Status "Submitted"}}
+						<td><input type="button" class="btn btn-success center-block" value="Accept" onClick="acceptBid('{{.UserID}}','{{.User.Address}}','{{.HouseID}}','{{.HouseAddress}}');"/></td>
+						<td><input type="button" class="btn btn-danger center-block" value="Reject" onClick="rejectBid('{{.UserID}}','{{.User.Address}}','{{.HouseID}}','{{.HouseAddress}}');"/></td>
+					{{else}}
+						<td style="color:#9A9A9A" class="text-center" colspan="2">{{.Status}}</td>
+					{{end}}
+				</tr>
+			{{end}}
+			</tbody>
+			</table>
+		</div>
+	</div>
+    </body>
+    <script>
+	function acceptBid(user,userAddress,houseID,contract) {
+		callHouseAcceptBid(contract,userAddress);
+		window.location={{.URL}} + "/house/" + houseID + "/bid/" + user + "/changeStatus/Accepted";
+	}
+
+	function rejectBid(user,userAddress,houseID,contract,amount) {
+		callHouseRejectBid(contract,userAddress);
+		window.location={{.URL}} + "/house/" + houseID + "/bid/" + user + "/changeStatus/Rejected";
+	}
+    </script>
+</html>

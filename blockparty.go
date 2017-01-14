@@ -79,6 +79,7 @@ type Mortgage struct {
 	Appraisal     float64 `json:"appraisal" redis:"appraisal"`
 	AppraisalDate string  `json:"appraisalDate" redis:"appraisalDate"`
 	Status        string  `json:"status" redis:"status"`
+	Override	string `json:"override" redis:"override"`
 }
 
 func (m Mortgage) getKey() string {
@@ -528,6 +529,10 @@ func getMyMortgages(u string) []Mortgage {
 	return getMortgages("*:" + u)
 }
 
+func getMyMortgage(i string, u string) Mortgage {
+	return getMortgage("mortgage:" + i + ":" + u)
+}
+
 func getHouseMortgages(i string) []Mortgage {
 	return getMortgages(i + ":*")
 }
@@ -735,7 +740,7 @@ func enterMortgageHandler(w http.ResponseWriter, r *http.Request) {
 
 	_, err = c.Do("HMSET", key, "user", u, "amount", a, "houseID", i, "lender", l, "status", "Submitted")
 	check("HMSET", err)
-	http.Redirect(w, r, mainURL+"/myMortgages", http.StatusFound)
+	http.Redirect(w, r, mainURL+"/house/" + i + "/mortgage/myMortgage", http.StatusFound)
 }
 
 func updateMortgageAmountHandler(w http.ResponseWriter, r *http.Request) {
@@ -757,7 +762,7 @@ func updateMortgageAmountHandler(w http.ResponseWriter, r *http.Request) {
 
 	key := "mortgage:" + i + ":" + um
 
-	_, err = c.Do("HSET", key, "amount", a)
+	_, err = c.Do("HMSET", key, "amount", a, "override", "Yes")
 	check("HSET", err)
 	http.Redirect(w, r, mainURL+"/lender", http.StatusFound)
 }
@@ -827,6 +832,30 @@ func myBidHandler(w http.ResponseWriter, r *http.Request) {
 	payload.Houses = append(payload.Houses, house)
 	payload.Users = append(payload.Users, getUser(u))
 	payload.Bids = append(payload.Bids, myBid)
+	t.Execute(w, payload)
+}
+
+func myMortgageHandler(w http.ResponseWriter, r *http.Request) {
+	var u string
+
+	session, err := store.Get(r, "BlockPartySession")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	u = session.Values["user"].(string)
+
+	vars := mux.Vars(r)
+	i := vars["houseID"]
+	myMortgage := getMyMortgage(i, u)
+	house := getHouse(i)
+
+	t, err := template.ParseFiles("templates/myMortgage.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
+	check("Parse template", err)
+	var payload = newPayload()
+	payload.Houses = append(payload.Houses, house)
+	payload.Users = append(payload.Users, getUser(u))
+	payload.Mortgages = append(payload.Mortgages, myMortgage)
 	t.Execute(w, payload)
 }
 
@@ -1051,7 +1080,7 @@ func checkMortgageStatusHandler(w http.ResponseWriter, r *http.Request) {
 	i := vars["houseID"]
 	u := vars["user"]
 
-	key := "mortgage" + i + ":" + u
+	key := "mortgage:" + i + ":" + u
 	mortgage := getMortgage(key)
 	response, err := json.Marshal(mortgage)
 	check("Marshal", err)
@@ -1191,6 +1220,19 @@ func resetHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, mainURL, http.StatusFound)
 }
 
+func getHouseInfoHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	i := vars["houseID"]
+	house := getHouse(i)
+	log.Print(house)
+	log.Print(house.Contract)
+	response, err := json.Marshal(house)
+	check("Marshal", err)
+	log.Print(response)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(response)
+}
+
 func main() {
 	initialize()
 	router := mux.NewRouter().StrictSlash(true)
@@ -1198,6 +1240,7 @@ func main() {
 	router.HandleFunc("/seller", sellerHandler)
 	router.HandleFunc("/house/{houseID}", detailsHandler)
 	router.HandleFunc("/house/{houseID}/listHouse", listHouseHandler)
+	router.HandleFunc("/house/{houseID}/info", getHouseInfoHandler)
 	router.HandleFunc("/house/{houseID}/enterListing", enterListingHandler)
 	router.HandleFunc("/house/{houseID}/enterBid", enterBidHandler)
 	router.HandleFunc("/house/{houseID}/myBid", myBidHandler)
@@ -1206,7 +1249,7 @@ func main() {
 	router.HandleFunc("/lender", lenderHandler)
 	router.HandleFunc("/house/{houseID}/applyForMortgage", applyHandler)
 	router.HandleFunc("/house/{houseID}/enterMortgage", enterMortgageHandler)
-	router.HandleFunc("/house/{houseID}/mortgage", mortgageHandler)
+	router.HandleFunc("/house/{houseID}/mortgage/myMortgage", myMortgageHandler)
 	router.HandleFunc("/house/{houseID}/mortgage/{user}/changeStatus/{status}", changeMortgageStatusHandler)
 	router.HandleFunc("/house/{houseID}/mortgage/{user}/checkStatus", checkMortgageStatusHandler)
 	router.HandleFunc("/appraiser", appraiserHandler)
