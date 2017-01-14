@@ -31,6 +31,7 @@
 		address=data.address;
 		$("#title").text("Bids for " + address);
 		response=listBids(contract);
+		console.log(response);
 	
 		table=d3.select("#tableData").selectAll("tr").data(response.bids);
 	
