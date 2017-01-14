@@ -11,7 +11,7 @@
 			<div>
 			<img src="/images/star.png"/ style="height:9em ; width:9em" onClick="selectLender('1');">
 			<label for="l1" >
-				<input type="radio" name="lender" id="l1" value="1"/>
+				<input type="radio" name="lender" id="l1" value="1" checked/>
 				Mortgage Star
 			</label>
 			<img src="/images/storm.png"/ style="height:9em ; width:9em" onClick="selectLender('2');">
@@ -44,7 +44,6 @@
 		amount=parseInt(amount.replace(",","").replace(".",""));
 		if ($.isNumeric(amount)) {
 			l=$("input[name=lender]").val();
-	
 			parameters={"amount":amount,"lender":l};
 	
 			var form = $('<form></form>');

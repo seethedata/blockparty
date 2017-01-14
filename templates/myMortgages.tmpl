@@ -2,6 +2,17 @@
 <html>
 {{template "head" .}}
     <body>
+    <script>
+	function getLender(n) {
+		if (n == "1") {
+			return "Mortgage Star";
+		} else if (n == "2") {
+			return "Lending Storm";
+		} else if (n == "3") {
+			return "GreenCents";
+		}
+	}
+    </script>
 	{{template "navbar" .}}
 	<div class="container-fluid">
 		<h2 class="text-center" id="title">My Mortgages</h2>
@@ -12,7 +23,6 @@
 				<th>House ID</th>
 				<th>Amount</th>
 				<th>Lender</th>
-				<th>Inspection</th>
 				<th>Status</th>
 				</tr>
 			</thead>
@@ -22,15 +32,7 @@
 				<tr onClick="showMyMortgage('{{.HouseID}}');">
 					<td><a>{{.HouseID}}</a></td>
 					<td>$<script>document.write(formatAmount({{.Amount}})); </script></td>
-					<td><a>{{.Lender}}</a></td>
-					<td>
-					{{$houseID:=.HouseID}}
-						{{range $houses}}
-							{{if eq	.ID $houseID}}
-								{{.InspectionDate}}
-							{{end}}
-						{{end}}
-					</td>
+					<td><script>document.write(getLender({{.Lender}}));</script></td>
 					<td>{{.Status}}</td>
 			{{end}}
 				</tr>
@@ -41,7 +43,8 @@
     </body>
     <script>
 	function showMyMortgage(houseID) {
-		window.location={{.URL}} + "/house/" + houseID + "/mortgage";
+		window.location={{.URL}} + "/house/" + houseID + "/mortgage/myMortgage";
 	}
+
     </script>
 </html>

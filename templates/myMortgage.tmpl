@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+{{template "head" .}}
+    <body>
+	{{template "navbar" .}}
+	<div class="container-fluid">
+		<div class="center-block">
+			<img alt="house image" src="/images/{{range .Houses}}{{.Image}}{{end}}" id="houseImage" class="houseImage center-block"/>
+		</div>
+		<h2 id="message" class="text-center"></h2>
+	</div>
+    </body>
+    <script>
+	mainURL={{.URL}};
+
+
+	{{range .Mortgages}}
+	function updateStatus(){
+		$.getJSON(mainURL + "/house/" + {{ .HouseID }} + "/mortgage/" + {{.User}} + "/checkStatus",{ts:Date.now()},handleStatus);
+	}
+
+	setMessage({{.Status}},{{.Amount}},{{.Override}});
+	{{end}}
+
+	function setMessage(s,a,o) {
+		if (s == "Accepted") {
+			message="Congratulations! Your mortgage has been approved for $" + formatAmount(a) + ".";
+			if (o){
+				message=message + " Please note that the amount has been adjusted.";
+			}
+			$("#buttons").show();
+			$("#apply").show();
+		} else if (s == "Rejected") {
+			message="The mortgage lender has rejected your mortgage application.";
+			$("#buttons").show();
+		} else {
+			message="You have applied for a mortgage of $" + formatAmount(a) + " for this house.";
+		}
+		$("#message").html(message);
+	}
+
+
+
+	function handleStatus(data) {
+		s=data.status;
+		a=data.amount;
+		o=data.override;
+		setMessage(s,a,o);
+		if (s != "Submitted") {
+			clearInterval(interval);
+		}
+	}
+
+	interval=setInterval(updateStatus,5000);
+    </script>
+</html>

@@ -101,7 +101,7 @@
 		amount=$("#overrideAmount").val();
 		amount=parseInt(amount.replace(",","").replace(".",""));
 		if ($.isNumeric(amount)) {
-			callHouseApplyMortgage(c,amount);
+			callHouseChangeMortgageValue(c,amount);
 			parameters={"amount":amount,"user":u};
 	
 			var form = $('<form></form>');

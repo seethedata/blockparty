@@ -15,7 +15,7 @@
 						<div>
 							<div>
 								<img alt="house image" src="/images/{{range .Houses}}{{.Image}}{{end}}" 
-									id="houseImage" class="houseImage center-block" onClick="showUser();"/>
+									id="houseImage" class="houseImage center-block" />
 							</div>
 							<div class="description" id="description">{{range .Houses}}{{.Description}}{{end}}</div>
 						</div>
@@ -31,6 +31,7 @@
 							document.write("Asking Price: $" + formatAmount(price));
 						</script>
 						</div>
+					{{$users:= .Users}}
 					{{range .Houses}}
 						{{if ne .Status "Sold"}}
 						<div class="form-group">
@@ -38,7 +39,7 @@
 								<span class="input-group-addon">$</span>
 								<input type="text" id="bidAmount" class="form-control" placeholder="Bid Amount" onKeyUp="formatInput(this,'#bidButton');"/>
 								<span class="input-group-btn">
-									<input id="bidButton" type="button" class="btn btn-success" value="Bid" onClick="bidOnHouse('{{.ID}}');"/>
+									<input id="bidButton" type="button" class="btn btn-success" value="Bid" onClick="bidOnHouse('{{.ID}}','{{range $users}}{{.Address}}{{end}}');"/>
 								</span>
 							</div>
 						</div>
@@ -80,12 +81,11 @@
 		$("#user").toggle();
 	}
 
-	function bidOnHouse(houseID) {
+	function bidOnHouse(houseID,userAddress) {
 		bidAmount=$("#bidAmount").val();
 		bidAmount=parseInt(bidAmount.replace(",","").replace(".",""));
 		if ($.isNumeric(bidAmount)) {
-			userContract="0x7da0bfcc195a8f021cd5f3175014c1d57b094f26";
-			callHousePlaceBid({{range .Houses}}{{.Contract}}{{end}},bidAmount,userContract);
+			callHousePlaceBid({{range .Houses}}{{.Contract}}{{end}},bidAmount,userAddress);
 	
 			parameters={"bidAmount":bidAmount};
 	
