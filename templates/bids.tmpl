@@ -4,7 +4,7 @@
     <body>
 	{{template "navbar" .}}
 	<div class="container-fluid">
-		<h2 class="text-center" id="title"></h2>
+		<h2 class="text-center" id="title">Bids for {{range .Houses}}{{.Address}}{{end}}</h2>
 		<div id="bidTable">
 			<table class="table table-striped">
 			<thead>
@@ -16,68 +16,33 @@
 				</tr>
 			</thead>
 			<tbody id="tableData">
+			{{range .Bids}}
+				<tr>
+					<td>{{.UserID}}</td>
+					<td>{{.HouseID}}</td>
+					<td>$<script>document.write(formatAmount({{.Amount}})); </script></td>
+					{{if eq .Status "Submitted"}}
+						<td><input type="button" class="btn btn-success center-block" value="Accept" onClick="acceptBid('{{.UserID}}','{{.User.Address}}','{{.HouseID}}','{{.HouseAddress}}');"/></td>
+						<td><input type="button" class="btn btn-danger center-block" value="Reject" onClick="rejectBid('{{.UserID}}','{{.User.Address}}','{{.HouseID}}','{{.HouseAddress}}');"/></td>
+					{{else}}
+						<td style="color:#9A9A9A" class="text-center" colspan="2">{{.Status}}</td>
+					{{end}}
+				</tr>
+			{{end}}
 			</tbody>
 			</table>
 		</div>
 	</div>
     </body>
     <script>
-	mainURL={{.URL}};
-	houseID=window.location.pathname.replace("/house/","").replace("/bids","");
-	$.getJSON(mainURL + "/house/" + houseID + "/info",{ts:Date.now()},populateBids);
-
-	function populateBids(data) {
-		contract=data.contract;
-		address=data.address;
-		$("#title").text("Bids for " + address);
-		response=listBids(contract);
-	
-		table=d3.select("#tableData").selectAll("tr").data(response.bids);
-	
-		row=table.enter()
-			.append("tr");
-		
-		row
-			.append("td")
-				.text(function(d){return d.bidder;});
-		row
-			.append("td")
-			.text(houseID);
-		row
-			.append("td")
-				.text(function(d){return "$" + formatAmount(d.amount);});
-		row
-			.append("td")
-				.append("input")
-					.attr("type","button")
-					.attr("class","btn btn-success center-block")
-					.attr("style",function(d){if (d.status == 1) {return "display:none";}})
-					.attr("value","Accept")
-					.attr("onClick",function(d){return "acceptBid('" + d.bidder + "','" + contract + "');";});
-		row
-			.append("td")
-				.append("input")
-					.attr("type","button")
-					.attr("class","btn btn-danger center-block")
-					.attr("style",function(d){if (d.status == 1 ) {return "display:none";}})
-					.attr("value","Reject")
-					.attr("onClick",function(d){return "rejectBid('" + d.bidder + "','" + contract + "');";});
-	
-		row
-			.append("td")
-					.attr("class","text-center")
-					.attr("style",function(d){if (d.status > 1) {return "display:none";}})
-					.attr("colspan","2")
-					.text(function(d){if (d.status == 2) {return "Accepted";} else if (d.status == 3) { return "Rejected" }});
-	}
 	function acceptBid(user,userAddress,houseID,contract) {
 		callHouseAcceptBid(contract,userAddress);
-		window.location=mainURL + "/house/" + houseID + "/bid/" + user + "/changeStatus/Accepted";
+		window.location={{.URL}} + "/house/" + houseID + "/bid/" + user + "/changeStatus/Accepted";
 	}
 
 	function rejectBid(user,userAddress,houseID,contract,amount) {
 		callHouseRejectBid(contract,userAddress);
-		window.location=mainURL + "/house/" + houseID + "/bid/" + user + "/changeStatus/Rejected";
+		window.location={{.URL}} + "/house/" + houseID + "/bid/" + user + "/changeStatus/Rejected";
 	}
     </script>
 </html>
