@@ -2,6 +2,12 @@
 <html>
 {{template "head" .}}
     <body>
+	<script>
+		var usermap={};
+		{{range .Bids}}
+			usermap[{{.UserAddress}}]={{.UserID}};
+		{{end}}
+	</script>
 	{{template "navbar" .}}
 	<div class="container-fluid">
 		<h2 class="text-center" id="title"></h2>
@@ -59,7 +65,7 @@
 					.attr("class","btn btn-success center-block")
 					.attr("style",function(d){if (d.status != 1) {return "display:none";}})
 					.attr("value","Accept")
-					.attr("onClick",function(d){return "acceptBid('" + d.bidder + "','" + c + "');";});
+					.attr("onClick",function(d){return "acceptBid('" + d.bidder + "','" + c + "','" + usermap[d.bidder] + "');";});
 		row
 			.append("td")
 				.append("input")
@@ -67,7 +73,7 @@
 					.attr("class","btn btn-danger center-block")
 					.attr("style",function(d){if (d.status != 1 ) {return "display:none";}})
 					.attr("value","Reject")
-					.attr("onClick",function(d){return "rejectBid('" + d.bidder + "','" + c + "');";});
+					.attr("onClick",function(d){return "rejectBid('" + d.bidder + "','" + c + "','" + usermap[d.bidder] + "');";});
 	
 		row
 			.append("td")
@@ -76,14 +82,16 @@
 					.attr("colspan","2")
 					.text(function(d){if (d.status == 2) {return "Accepted";} else if (d.status == 3) { return "Rejected" }});
 	}
-	function acceptBid(userAddress,contract) {
+	function acceptBid(userAddress,contract,userID) {
 		callHouseAcceptBid(contract,userAddress);
+		window.location=mainURL + "/house/" + houseID + "/bid/" + userID + "/changeStatus/Accepted";
 		$("#tableData").html("");
 		getBidData();
 	}
 
-	function rejectBid(userAddress,contract) {
+	function rejectBid(userAddress,contract,userID) {
 		callHouseRejectBid(contract,userAddress);
+		window.location=mainURL + "/house/" + houseID + "/bid/" + userID + "/changeStatus/Reject";
 		$("#tableData").html("");
 		getBidData();
 	}
