@@ -20,38 +20,46 @@
     </body>
     <script>
 	mainURL={{.URL}};
+	houseID=window.location.pathname.replace("/house/","").replace("/myBid","");
+		
+	userAddress={{range .Users}}{{.Address}}{{end}};
 
-	{{range .Bids}}
+
 	function updateStatus(){
-		$.getJSON(mainURL + "/house/" + {{ .HouseID }} + "/bid/" + {{.UserID}} + "/checkStatus",{ts:Date.now()},handleStatus);
+		$.getJSON(mainURL + "/house/" + houseID + "/info",{ts:Date.now()},handleStatus);
 	}
 
-	function setMessage(s) {
-		if (s == "Accepted") {
+	function handleStatus(data) {
+		c=data.contract;	
+		response=listBids(c);
+		var bid = {};
+		for (i=0; i < response.numberBids ; i++) {
+			if (response.bids[i].bidder == userAddress) {
+				bid=response.bids[i];
+				break;
+			}
+		}
+		if (bid.status != 1) {
+			clearInterval(interval);
+		}
+		setMessage(bid);
+	}
+
+	function setMessage(b) {
+		if (b.status == 2) { // Accepted 
 			message="Congratulations! Your bid has been accepted!";
 			$("#buttons").show();
 			$("#apply").show();
-		} else if (s == "Rejected") {
+		} else if (b.status == 3) { // Rejected 
 			message="The seller has accepted another bid.";
 			$("#buttons").show();
-		} else {
-			message="You have bid $" + formatAmount({{.Amount}}) + " for this house.";
+		} else { // Submitted 
+			message="You have bid $" + formatAmount(b.amount) + " for this house.";
 		}
 		$("#message").html(message);
 	}
 
-	setMessage({{.Status}});
-
-	{{end}}
-
-	function handleStatus(data) {
-		s=data.status;
-		setMessage(s);
-		if (s != "Submitted") {
-			clearInterval(interval);
-		}
-	}
-
+	updateStatus(); 
 	interval=setInterval(updateStatus,5000);
 
 	function applyForMortgage(i) {

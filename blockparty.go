@@ -692,13 +692,6 @@ func enterBidHandler(w http.ResponseWriter, r *http.Request) {
 	check("HMSET", err)
 
 	http.Redirect(w, r, mainURL+"/house/"+i+"/myBid", http.StatusFound)
-//	var payload = newPayload()
-//	payload.Bids = append(payload.Bids, getBid(key))
-//	payload.Houses = append(payload.Houses, h)
-//	payload.Users = append(payload.Users, getUser(u))
-//	t, err := template.ParseFiles("templates/myBid.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
-//	check("Parse template", err)
-//	t.Execute(w, payload)
 }
 
 func enterListingHandler(w http.ResponseWriter, r *http.Request) {
@@ -1224,11 +1217,18 @@ func getHouseInfoHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	i := vars["houseID"]
 	house := getHouse(i)
-	log.Print(house)
-	log.Print(house.Contract)
 	response, err := json.Marshal(house)
 	check("Marshal", err)
-	log.Print(response)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(response)
+}
+
+func getUserInfoHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	i := vars["user"]
+	user := getUser(i)
+	response, err := json.Marshal(user)
+	check("Marshal", err)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(response)
 }
@@ -1267,6 +1267,7 @@ func main() {
 	router.HandleFunc("/house/{houseID}/changeQuality/{quality}", changeHouseQualityHandler)
 	router.HandleFunc("/house/{houseID}/bid/{user}/changeStatus/{status}", changeBidStatusHandler)
 	router.HandleFunc("/house/{houseID}/bid/{user}/checkStatus", checkBidStatusHandler)
+	router.HandleFunc("/user/{user}/info", getUserInfoHandler)
 	router.HandleFunc("/missingRequirements", missingRequirementsHandler)
 	router.HandleFunc("/reset", resetHandler)
 	router.HandleFunc("/addressList", addressListHandler)

@@ -24,14 +24,19 @@
     <script>
 	mainURL={{.URL}};
 	houseID=window.location.pathname.replace("/house/","").replace("/bids","");
-	$.getJSON(mainURL + "/house/" + houseID + "/info",{ts:Date.now()},populateBids);
+
+	function getBidData() {
+		console.log("GBD");
+		$.getJSON(mainURL + "/house/" + houseID + "/info",{ts:Date.now()},populateBids);
+	}
+
+	getBidData();
 
 	function populateBids(data) {
-		contract=data.contract;
+		c=data.contract;
 		address=data.address;
 		$("#title").text("Bids for " + address);
-		response=listBids(contract);
-		console.log(response);
+		response=listBids(c);
 	
 		table=d3.select("#tableData").selectAll("tr").data(response.bids);
 	
@@ -52,33 +57,35 @@
 				.append("input")
 					.attr("type","button")
 					.attr("class","btn btn-success center-block")
-					.attr("style",function(d){if (d.status == 1) {return "display:none";}})
+					.attr("style",function(d){if (d.status != 1) {return "display:none";}})
 					.attr("value","Accept")
-					.attr("onClick",function(d){return "acceptBid('" + d.bidder + "','" + contract + "');";});
+					.attr("onClick",function(d){return "acceptBid('" + d.bidder + "','" + c + "');";});
 		row
 			.append("td")
 				.append("input")
 					.attr("type","button")
 					.attr("class","btn btn-danger center-block")
-					.attr("style",function(d){if (d.status == 1 ) {return "display:none";}})
+					.attr("style",function(d){if (d.status != 1 ) {return "display:none";}})
 					.attr("value","Reject")
-					.attr("onClick",function(d){return "rejectBid('" + d.bidder + "','" + contract + "');";});
+					.attr("onClick",function(d){return "rejectBid('" + d.bidder + "','" + c + "');";});
 	
 		row
 			.append("td")
 					.attr("class","text-center")
-					.attr("style",function(d){if (d.status > 1) {return "display:none";}})
+					.attr("style",function(d){if (d.status == 1) {return "display:none";}})
 					.attr("colspan","2")
 					.text(function(d){if (d.status == 2) {return "Accepted";} else if (d.status == 3) { return "Rejected" }});
 	}
-	function acceptBid(user,userAddress,houseID,contract) {
+	function acceptBid(userAddress,contract) {
 		callHouseAcceptBid(contract,userAddress);
-		window.location=mainURL + "/house/" + houseID + "/bid/" + user + "/changeStatus/Accepted";
+		$("#tableData").html("");
+		getBidData();
 	}
 
-	function rejectBid(user,userAddress,houseID,contract,amount) {
+	function rejectBid(userAddress,contract) {
 		callHouseRejectBid(contract,userAddress);
-		window.location=mainURL + "/house/" + houseID + "/bid/" + user + "/changeStatus/Rejected";
+		$("#tableData").html("");
+		getBidData();
 	}
     </script>
 </html>

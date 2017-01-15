@@ -109,7 +109,7 @@ function listBids(c) {
 		bid["amount"] = res[1];
 		bid["accepted"] = res[2];
 		bid["index"] = res[3];
-        bid["status"] = res[4];
+        	bid["status"] = res[4];
 		bids["bids"].push(bid);
 	}
 	return bids;
