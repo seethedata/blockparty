@@ -77,7 +77,6 @@
 	</div><!-- /.modal -->
     </body>
     <script>
-	var b={{range .Mortgages}}{{.Appraisal}}{{end}};
 	function scheduleAppraisal(i,u) {
 		window.location={{.URL}} + "/house/" + i + "/mortgage/" + u + "/scheduleAppraisal";
 	}

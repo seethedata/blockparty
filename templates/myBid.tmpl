@@ -53,8 +53,10 @@
 		} else if (b.status == 3) { // Rejected 
 			message="The seller has accepted another bid.";
 			$("#buttons").show();
-		} else { // Submitted 
+		} else if (b.status == 1 ) { // Submitted 
 			message="You have bid $" + formatAmount(b.amount) + " for this house.";
+		} else {
+			message="Bid submitted.";
 		}
 		$("#message").html(message);
 	}

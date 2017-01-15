@@ -115,4 +115,3 @@ function listBids(c) {
 	return bids;
 }
 
-
