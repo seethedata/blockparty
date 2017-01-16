@@ -19,7 +19,7 @@
 		{{$houses:=.Houses}}
 		{{range .Mortgages}}
 		{{$houseID:=.HouseID}}
-			<input id="appraiseButton" type="button" class="btn btn-success" value="Enter" onClick="enterAppraisal('{{.HouseID}}','{{.User}}','{{range $houses}}{{if eq .ID $houseID}}{{.Contract}}{{end}}{{end}}');"/>
+			<input id="appraiseButton" type="button" class="btn btn-success" value="Enter" onClick="enterAppraisal('{{.HouseID}}','{{.UserID}}','{{range $houses}}{{if eq .ID $houseID}}{{.Contract}}{{end}}{{end}}');"/>
 		{{end}}
 					</span>
 				</div>
@@ -29,7 +29,7 @@
     <script>
 	function enterAppraisal(i,u,c) {
 		amount=$("#appraiseAmount").val();
-		amount=parseInt(amount.replace(",","").replace(".",""));
+		amount=cleanInput(amount);
 		if ($.isNumeric(amount)) {
 			callHouseAppraisal(c,amount);
 			parameters={"amount":amount,"user":u};

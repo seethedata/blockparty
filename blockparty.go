@@ -72,18 +72,18 @@ type Bid struct {
 
 // A Mortgage on a house
 type Mortgage struct {
-	User          string  `json:"user" redis:"user"`
+	UserID          string  `json:"user" redis:"user"`
 	Amount        float64 `json:"amount" redis:"amount"`
 	HouseID       string  `json:"houseID" redis:"houseID"`
 	Lender        string  `json:"lender" redis:"lender"`
 	Appraisal     float64 `json:"appraisal" redis:"appraisal"`
 	AppraisalDate string  `json:"appraisalDate" redis:"appraisalDate"`
 	Status        string  `json:"status" redis:"status"`
-	Override	string `json:"override" redis:"override"`
+	Override      string  `json:"override" redis:"override"`
 }
 
 func (m Mortgage) getKey() string {
-	return "mortgage:" + m.HouseID + ":" + m.User
+	return "mortgage:" + m.HouseID + ":" + m.UserID
 }
 
 func (b Bid) getKey() string {
@@ -117,7 +117,7 @@ type Address struct {
 
 // AddressList is a list of ethereum users
 type AddressList struct {
-	Data []Address `json:"data" redis:"data"`
+	Data []Address `json:"data" redis:"data:`
 }
 
 // UserList is a list of ethereum users
@@ -301,7 +301,6 @@ func rejectOtherBids(i string, u string) error {
 		}
 	}
 	return err
-
 }
 
 func changeMortgageStatus(i string, u string, status string) error {
@@ -310,6 +309,22 @@ func changeMortgageStatus(i string, u string, status string) error {
 
 	key := "mortgage:" + i + ":" + u
 	_, err := c.Do("HSET", key, "status", status)
+	return err
+}
+
+func rejectOtherMortgages(i string, u string) error {
+	var err error
+	c := pool.Get()
+	defer c.Close()
+
+	mortgages := getMortgages(i + ":*")
+	for _, v := range mortgages {
+		if v.UserID != u {
+			key := "mortgage:" + i + ":" + v.UserID
+			_, err := c.Do("HSET", key, "status", "Rejected")
+			check("HSET", err)
+		}
+	}
 	return err
 }
 
@@ -692,13 +707,6 @@ func enterBidHandler(w http.ResponseWriter, r *http.Request) {
 	check("HMSET", err)
 
 	http.Redirect(w, r, mainURL+"/house/"+i+"/myBid", http.StatusFound)
-//	var payload = newPayload()
-//	payload.Bids = append(payload.Bids, getBid(key))
-//	payload.Houses = append(payload.Houses, h)
-//	payload.Users = append(payload.Users, getUser(u))
-//	t, err := template.ParseFiles("templates/myBid.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
-//	check("Parse template", err)
-//	t.Execute(w, payload)
 }
 
 func enterListingHandler(w http.ResponseWriter, r *http.Request) {
@@ -740,7 +748,7 @@ func enterMortgageHandler(w http.ResponseWriter, r *http.Request) {
 
 	_, err = c.Do("HMSET", key, "user", u, "amount", a, "houseID", i, "lender", l, "status", "Submitted")
 	check("HMSET", err)
-	http.Redirect(w, r, mainURL+"/house/" + i + "/mortgage/myMortgage", http.StatusFound)
+	http.Redirect(w, r, mainURL+"/house/"+i+"/mortgage/myMortgage", http.StatusFound)
 }
 
 func updateMortgageAmountHandler(w http.ResponseWriter, r *http.Request) {
@@ -902,7 +910,7 @@ func appraiseHandler(w http.ResponseWriter, r *http.Request) {
 	mortgages := getHouseMortgages(i)
 
 	for _, m := range mortgages {
-		if m.User == um {
+		if m.UserID == um {
 			payload.Mortgages = append(payload.Mortgages, m)
 		}
 	}
@@ -1005,6 +1013,7 @@ func enterAppraisalHandler(w http.ResponseWriter, r *http.Request) {
 	a := r.PostFormValue("amount")
 	a = strings.Replace(a, ",", "", -1)
 	a = strings.Replace(a, ".", "", -1)
+	log.Print(a)
 	u := r.PostFormValue("user")
 
 	err := setAppraisal(i, u, a)
@@ -1044,7 +1053,6 @@ func changeBidStatusHandler(w http.ResponseWriter, r *http.Request) {
 	if s == "Accepted" {
 		err := rejectOtherBids(i, u)
 		check("rejectOtherBids", err)
-		err = changeHouseStatus(i, "Sold")
 		check("changeHouseStatus", err)
 	}
 	http.Redirect(w, r, mainURL+"/seller", http.StatusFound)
@@ -1059,6 +1067,12 @@ func changeMortgageStatusHandler(w http.ResponseWriter, r *http.Request) {
 	err := changeMortgageStatus(i, u, s)
 	check("changeMortgageStatus", err)
 
+	if s == "Accepted" {
+		err := rejectOtherMortgages(i, u)
+		check("rejectOtherMortgages", err)
+		err = changeHouseStatus(i, "Sold")
+		check("changeHouseStatus", err)
+	}
 	http.Redirect(w, r, mainURL+"/lender", http.StatusFound)
 }
 

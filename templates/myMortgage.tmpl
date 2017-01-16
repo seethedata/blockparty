@@ -16,7 +16,7 @@
 
 	{{range .Mortgages}}
 	function updateStatus(){
-		$.getJSON(mainURL + "/house/" + {{ .HouseID }} + "/mortgage/" + {{.User}} + "/checkStatus",{ts:Date.now()},handleStatus);
+		$.getJSON(mainURL + "/house/" + {{ .HouseID }} + "/mortgage/" + {{.UserID}} + "/checkStatus",{ts:Date.now()},handleStatus);
 	}
 
 	setMessage({{.Status}},{{.Amount}},{{.Override}});

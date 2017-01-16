@@ -83,7 +83,7 @@
 
 	function bidOnHouse(houseID,userAddress) {
 		bidAmount=$("#bidAmount").val();
-		bidAmount=parseInt(bidAmount.replace(",","").replace(".",""));
+		bidAmount=cleanInput(bidAmount);
 		if ($.isNumeric(bidAmount)) {
 			callHousePlaceBid({{range .Houses}}{{.Contract}}{{end}},bidAmount,userAddress);
 	

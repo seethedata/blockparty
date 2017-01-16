@@ -22,7 +22,7 @@
 			{{$houseID:=.HouseID}}
 				<tr>
 					<td>{{.HouseID}}</td>
-					<td>{{.User}}</td>
+					<td>{{.UserID}}</td>
 					<td>$<script>document.write(formatAmount({{.Amount}})); </script></td>
 					<td class="text-center">
 						{{if .Appraisal}}
@@ -31,17 +31,17 @@
 							{{if .AppraisalDate}}
 								{{.AppraisalDate}}
 							{{else}}
-								<input type="button" class="btn btn-primary center-block" value="Schedule" onClick="scheduleAppraisal('{{.HouseID}}','{{.User}}');"/></td>
+								<input type="button" class="btn btn-primary center-block" value="Schedule" onClick="scheduleAppraisal('{{.HouseID}}','{{.UserID}}');"/></td>
 							{{end}}
 						{{end}}
 					</td>
 					{{if and (eq .Status "Submitted") (.Appraisal)}}
 						{{if gt .Amount .Appraisal}}
-							<td><input type="button" class="btn btn-primary center-block" value="Override" onClick="override('{{.HouseID}}','{{.User}}','{{range $houses}}{{if eq .ID $houseID}}{{.Contract}}{{end}}{{end}}');"/></td>
+							<td><input type="button" class="btn btn-primary center-block" value="Override" onClick="override('{{.HouseID}}','{{.UserID}}','{{range $houses}}{{if eq .ID $houseID}}{{.Contract}}{{end}}{{end}}');"/></td>
 						{{else}}
-							<td><input type="button" class="btn btn-success center-block" value="Accept" onClick="acceptMortgage('{{.HouseID}}','{{.User}}','{{range $houses}}{{if eq .ID $houseID}}{{.Contract}}{{end}}{{end}}','{{.Amount}}');"/></td>
+							<td><input type="button" class="btn btn-success center-block" value="Accept" onClick="acceptMortgage('{{.HouseID}}','{{.UserID}}','{{range $houses}}{{if eq .ID $houseID}}{{.Contract}}{{end}}{{end}}','{{.Amount}}');"/></td>
 						{{end}}
-						<td><input type="button" class="btn btn-danger center-block" value="Reject" onClick="rejectMortgage('{{.HouseID}}','{{.User}}','{{range $houses}}{{if eq .ID $houseID}}{{.Contract}}{{end}}{{end}}');"/></td>
+						<td><input type="button" class="btn btn-danger center-block" value="Reject" onClick="rejectMortgage('{{.HouseID}}','{{.UserID}}','{{range $houses}}{{if eq .ID $houseID}}{{.Contract}}{{end}}{{end}}');"/></td>
 					{{else}}
 						<td style="color:#9A9A9A" class="text-center" colspan="2">{{.Status}}</td>
 					{{end}}
@@ -77,7 +77,6 @@
 	</div><!-- /.modal -->
     </body>
     <script>
-	var b={{range .Mortgages}}{{.Appraisal}}{{end}};
 	function scheduleAppraisal(i,u) {
 		window.location={{.URL}} + "/house/" + i + "/mortgage/" + u + "/scheduleAppraisal";
 	}
@@ -99,7 +98,7 @@
 
 	function overrideMortgageAmount(i,u,c) {
 		amount=$("#overrideAmount").val();
-		amount=parseInt(amount.replace(",","").replace(".",""));
+		amount=cleanInput(amount);
 		if ($.isNumeric(amount)) {
 			callHouseChangeMortgageValue(c,amount);
 			parameters={"amount":amount,"user":u};

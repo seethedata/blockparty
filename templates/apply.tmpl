@@ -41,7 +41,7 @@
     <script>
 	function apply(houseID,c) {
 		amount=$("#amount").val();
-		amount=parseInt(amount.replace(",","").replace(".",""));
+		amount=cleanInput(amount);
 		if ($.isNumeric(amount)) {
 			l=$("input[name=lender]").val();
 			parameters={"amount":amount,"lender":l};

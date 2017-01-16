@@ -22,9 +22,9 @@
 					<td>{{range $houses}}{{if eq $i .ID}}{{.Address}}{{end}}{{end}}</td>
 					<td>{{.HouseID}}</td>
 					{{if .Appraisal}}
-						<td><script>document.write(formatAmount({{.Appraisal}}));</script></td>
+						<td class="text-center">$<script>document.write(formatAmount({{.Appraisal}}));</script></td>
 					{{else}}
-					<td><input type="button" class="btn btn-primary center-block" value="Appraise" onClick="appraise('{{.HouseID}}','{{.User}}');"/></td>
+					<td><input type="button" class="btn btn-primary center-block" value="Appraise" onClick="appraise('{{.HouseID}}','{{.UserID}}');"/></td>
 					{{end}}
 				</tr>
 			{{end}}
