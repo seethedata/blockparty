@@ -72,7 +72,7 @@ type Bid struct {
 
 // A Mortgage on a house
 type Mortgage struct {
-	UserID          string  `json:"user" redis:"user"`
+	UserID        string  `json:"user" redis:"user"`
 	Amount        float64 `json:"amount" redis:"amount"`
 	HouseID       string  `json:"houseID" redis:"houseID"`
 	Lender        string  `json:"lender" redis:"lender"`
@@ -512,6 +512,20 @@ func getMyBid(i string, u string) Bid {
 
 }
 
+func deleteAllHouseBids(i string) error {
+	var err error
+	c := pool.Get()
+	defer c.Close()
+
+	bids := getHouseBids(i)
+
+	for _, b := range bids {
+		_, err = c.Do("DEL", b.getKey())
+		check("DEL", err)
+	}
+	return err
+}
+
 func getMortgage(ID string) Mortgage {
 	var mortgage Mortgage
 	c := pool.Get()
@@ -550,6 +564,20 @@ func getMyMortgage(i string, u string) Mortgage {
 
 func getHouseMortgages(i string) []Mortgage {
 	return getMortgages(i + ":*")
+}
+
+func deleteAllHouseMortgages(i string) error {
+	var err error
+	c := pool.Get()
+	defer c.Close()
+
+	mortgages := getHouseMortgages(i)
+
+	for _, m := range mortgages {
+		_, err = c.Do("DEL", m.getKey())
+		check("DEL", err)
+	}
+	return err
 }
 
 func addressListHandler(w http.ResponseWriter, r *http.Request) {
@@ -1072,6 +1100,10 @@ func changeMortgageStatusHandler(w http.ResponseWriter, r *http.Request) {
 		check("rejectOtherMortgages", err)
 		err = changeHouseStatus(i, "Sold")
 		check("changeHouseStatus", err)
+		err = deleteAllHouseBids(i)
+		check("deleteAllHouseBids", err)
+		err = deleteAllHouseMortgages(i)
+		check("deleteAllHouseMortages", err)
 	}
 	http.Redirect(w, r, mainURL+"/lender", http.StatusFound)
 }
