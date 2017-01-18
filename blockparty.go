@@ -749,7 +749,10 @@ func enterListingHandler(w http.ResponseWriter, r *http.Request) {
 	check("changeHousePrice", err)
 	err = changeHouseStatus(i, "Listed")
 	check("changeHouseStatus", err)
-
+	err = deleteAllHouseBids(i)
+	check("deleteAllHouseBids", err)
+	err = deleteAllHouseMortgages(i)
+	check("deleteAllHouseMortages", err)
 	http.Redirect(w, r, mainURL+"/seller", http.StatusFound)
 }
 
@@ -1100,10 +1103,6 @@ func changeMortgageStatusHandler(w http.ResponseWriter, r *http.Request) {
 		check("rejectOtherMortgages", err)
 		err = changeHouseStatus(i, "Sold")
 		check("changeHouseStatus", err)
-		err = deleteAllHouseBids(i)
-		check("deleteAllHouseBids", err)
-		err = deleteAllHouseMortgages(i)
-		check("deleteAllHouseMortages", err)
 	}
 	http.Redirect(w, r, mainURL+"/lender", http.StatusFound)
 }
