@@ -773,7 +773,6 @@ func getContract(i string) (*Contract, error) {
 		log.Fatalf("Failed to bind to contract: %v", err)
 	}
 	return c, err
-
 }
 
 func getSigner(u string) (*bind.TransactOpts, error) {
@@ -796,12 +795,6 @@ func getSigner(u string) (*bind.TransactOpts, error) {
 }
 
 func enterListingHandler(w http.ResponseWriter, r *http.Request) {
-	session, err := store.Get(r, "BlockPartySession")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	u := session.Values["user"].(string)
 	vars := mux.Vars(r)
 	i := vars["houseID"]
 	a := r.PostFormValue("askingPrice")
@@ -810,8 +803,7 @@ func enterListingHandler(w http.ResponseWriter, r *http.Request) {
 
 	askingPrice := new(big.Int)
 	askingPrice.SetString(a, 10)
-
-	signer, err := getSigner(u)
+	signer, err := getSigner("Seller")
 	if err != nil {
 		log.Fatalf("getSigner failed: %v", err)
 	}

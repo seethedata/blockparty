@@ -40,7 +40,6 @@
 	}
 
 	function rejectBid(user,userAddress,houseID,contract,amount) {
-		callHouseRejectBid(contract,userAddress);
 		window.location={{.URL}} + "/house/" + houseID + "/bid/" + user + "/changeStatus/Rejected";
 	}
     </script>
