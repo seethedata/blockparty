@@ -49,8 +49,7 @@
 	}
 
     	function delistHouse(ID, contract) {
-		callHouseNotForSale(contract,'{{range .Users}}{{if eq .Type "System"}}{{.Address}}{{end}}{{end}}');
-		window.location={{.URL}} + "/house/" + ID + "/changeStatus/Sold";
+		window.location={{.URL}} + "/house/" + ID + "/delistHouse";
 	}
 
     </script>

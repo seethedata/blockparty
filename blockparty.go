@@ -5,6 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/cloudfoundry-community/go-cfenv"
+	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -12,6 +16,7 @@ import (
 	"html/template"
 	"io/ioutil"
 	"log"
+	"math/big"
 	"net/http"
 	"strconv"
 	"strings"
@@ -22,6 +27,7 @@ var (
 	pool    *redis.Pool
 	mainURL string
 	store   = sessions.NewCookieStore([]byte("BlockParty"))
+	maxGas  = big.NewInt(4700000)
 )
 
 type cfServices struct {
@@ -737,12 +743,63 @@ func enterBidHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, mainURL+"/house/"+i+"/myBid", http.StatusFound)
 }
 
+func getSigner(u string) (*bind.TransactOpts, error) {
+	var uaddr = common.HexToAddress(getUser(u).Address)
+	am := accounts.NewManager("keystore", accounts.StandardScryptN, accounts.StandardScryptP)
+	ac, err := am.Find(accounts.Account{Address: uaddr})
+	if err != nil {
+		log.Fatalf("Account not found: %v", err)
+	}
+	accountJSON, err := am.Export(ac, "password01", "blockparty")
+	if err != nil {
+		log.Fatalf("Account JSON failed:  %v", err)
+	}
+	key, err := accounts.DecryptKey(accountJSON, "blockparty")
+	if err != nil {
+		log.Fatalf("Decrypt key failed: %v", err)
+	}
+	signer := bind.NewKeyedTransactor(key.PrivateKey)
+	return signer, err
+}
+
 func enterListingHandler(w http.ResponseWriter, r *http.Request) {
+	session, err := store.Get(r, "BlockPartySession")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	u := session.Values["user"].(string)
 	vars := mux.Vars(r)
 	i := vars["houseID"]
 	a := r.PostFormValue("askingPrice")
 	a = strings.Replace(a, ",", "", -1)
 	a = strings.Replace(a, ".", "", -1)
+
+	conn, err := ethclient.Dial("http://54.245.138.237:8545")
+	if err != nil {
+		log.Fatalf("Failed to connect to the Ethereum client: %v", err)
+	}
+
+	h := getHouse(i)
+
+	var addr = common.HexToAddress(h.Contract)
+	c, err := NewContract(addr, conn)
+	if err != nil {
+		log.Fatalf("Failed to bind to contract: %v", err)
+	}
+
+	askingPrice := new(big.Int)
+	askingPrice.SetString(a, 10)
+
+	signer, err := getSigner(u)
+	if err != nil {
+		log.Fatalf("getSigner failed: %v", err)
+	}
+	signer.GasLimit = maxGas
+	_, err = c.ForSale(signer, askingPrice)
+	if err != nil {
+		log.Fatalf("ForSale failed: %v", err)
+	}
 
 	ap, err := strconv.ParseFloat(a, 64)
 	err = changeHousePrice(i, ap)
@@ -756,6 +813,45 @@ func enterListingHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, mainURL+"/seller", http.StatusFound)
 }
 
+func delistHouseHandler(w http.ResponseWriter, r *http.Request) {
+	session, err := store.Get(r, "BlockPartySession")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	u := session.Values["user"].(string)
+	vars := mux.Vars(r)
+	i := vars["houseID"]
+	a := r.PostFormValue("askingPrice")
+	a = strings.Replace(a, ",", "", -1)
+	a = strings.Replace(a, ".", "", -1)
+
+	conn, err := ethclient.Dial("http://54.245.138.237:8545")
+	if err != nil {
+		log.Fatalf("Failed to connect to the Ethereum client: %v", err)
+	}
+
+	h := getHouse(i)
+
+	var addr = common.HexToAddress(h.Contract)
+	c, err := NewContract(addr, conn)
+	if err != nil {
+		log.Fatalf("Failed to bind to contract: %v", err)
+	}
+	signer, err := getSigner(u)
+	if err != nil {
+		log.Fatalf("getSigner failed: %v", err)
+	}
+	log.Printf("maxGas is %v\n", maxGas)
+	signer.GasLimit = maxGas
+	_, err = c.NotForSale(signer)
+	if err != nil {
+		log.Fatalf("NotForSale failed: %v", err)
+	}
+	err = changeHouseStatus(i, "Sold")
+	check("changeHouseStatus", err)
+	http.Redirect(w, r, mainURL+"/seller", http.StatusFound)
+}
 func enterMortgageHandler(w http.ResponseWriter, r *http.Request) {
 	var u string
 	session, err := store.Get(r, "BlockPartySession")
@@ -1287,6 +1383,7 @@ func main() {
 	router.HandleFunc("/house/{houseID}/listHouse", listHouseHandler)
 	router.HandleFunc("/house/{houseID}/info", getHouseInfoHandler)
 	router.HandleFunc("/house/{houseID}/enterListing", enterListingHandler)
+	router.HandleFunc("/house/{houseID}/delistHouse", delistHouseHandler)
 	router.HandleFunc("/house/{houseID}/enterBid", enterBidHandler)
 	router.HandleFunc("/house/{houseID}/myBid", myBidHandler)
 	router.HandleFunc("/myBids", myBidsHandler)

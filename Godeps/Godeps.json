@@ -1,7 +1,7 @@
 {
 	"ImportPath": "github.com/seethedata/blockparty",
 	"GoVersion": "go1.7",
-	"GodepVersion": "v74",
+	"GodepVersion": "v78",
 	"Deps": [
 		{
 			"ImportPath": "github.com/cloudfoundry-community/go-cfenv",
@@ -9,14 +9,109 @@
 			"Rev": "c567d77dab8551bc4077e68e5a04415f1d74a911"
 		},
 		{
+			"ImportPath": "github.com/ethereum/go-ethereum",
+			"Comment": "v1.5.7-23-g82aa5b1",
+			"Rev": "82aa5b1de69331a43f5050717d593aa97eda1ef5"
+		},
+		{
+			"ImportPath": "github.com/ethereum/go-ethereum/accounts",
+			"Comment": "v1.5.7-23-g82aa5b1",
+			"Rev": "82aa5b1de69331a43f5050717d593aa97eda1ef5"
+		},
+		{
+			"ImportPath": "github.com/ethereum/go-ethereum/accounts/abi",
+			"Comment": "v1.5.7-23-g82aa5b1",
+			"Rev": "82aa5b1de69331a43f5050717d593aa97eda1ef5"
+		},
+		{
+			"ImportPath": "github.com/ethereum/go-ethereum/accounts/abi/bind",
+			"Comment": "v1.5.7-23-g82aa5b1",
+			"Rev": "82aa5b1de69331a43f5050717d593aa97eda1ef5"
+		},
+		{
+			"ImportPath": "github.com/ethereum/go-ethereum/common",
+			"Comment": "v1.5.7-23-g82aa5b1",
+			"Rev": "82aa5b1de69331a43f5050717d593aa97eda1ef5"
+		},
+		{
+			"ImportPath": "github.com/ethereum/go-ethereum/common/hexutil",
+			"Comment": "v1.5.7-23-g82aa5b1",
+			"Rev": "82aa5b1de69331a43f5050717d593aa97eda1ef5"
+		},
+		{
+			"ImportPath": "github.com/ethereum/go-ethereum/core/types",
+			"Comment": "v1.5.7-23-g82aa5b1",
+			"Rev": "82aa5b1de69331a43f5050717d593aa97eda1ef5"
+		},
+		{
+			"ImportPath": "github.com/ethereum/go-ethereum/crypto",
+			"Comment": "v1.5.7-23-g82aa5b1",
+			"Rev": "82aa5b1de69331a43f5050717d593aa97eda1ef5"
+		},
+		{
+			"ImportPath": "github.com/ethereum/go-ethereum/crypto/ecies",
+			"Comment": "v1.5.7-23-g82aa5b1",
+			"Rev": "82aa5b1de69331a43f5050717d593aa97eda1ef5"
+		},
+		{
+			"ImportPath": "github.com/ethereum/go-ethereum/crypto/randentropy",
+			"Comment": "v1.5.7-23-g82aa5b1",
+			"Rev": "82aa5b1de69331a43f5050717d593aa97eda1ef5"
+		},
+		{
+			"ImportPath": "github.com/ethereum/go-ethereum/crypto/secp256k1",
+			"Comment": "v1.5.7-23-g82aa5b1",
+			"Rev": "82aa5b1de69331a43f5050717d593aa97eda1ef5"
+		},
+		{
+			"ImportPath": "github.com/ethereum/go-ethereum/crypto/sha3",
+			"Comment": "v1.5.7-23-g82aa5b1",
+			"Rev": "82aa5b1de69331a43f5050717d593aa97eda1ef5"
+		},
+		{
+			"ImportPath": "github.com/ethereum/go-ethereum/ethclient",
+			"Comment": "v1.5.7-23-g82aa5b1",
+			"Rev": "82aa5b1de69331a43f5050717d593aa97eda1ef5"
+		},
+		{
+			"ImportPath": "github.com/ethereum/go-ethereum/logger",
+			"Comment": "v1.5.7-23-g82aa5b1",
+			"Rev": "82aa5b1de69331a43f5050717d593aa97eda1ef5"
+		},
+		{
+			"ImportPath": "github.com/ethereum/go-ethereum/logger/glog",
+			"Comment": "v1.5.7-23-g82aa5b1",
+			"Rev": "82aa5b1de69331a43f5050717d593aa97eda1ef5"
+		},
+		{
+			"ImportPath": "github.com/ethereum/go-ethereum/params",
+			"Comment": "v1.5.7-23-g82aa5b1",
+			"Rev": "82aa5b1de69331a43f5050717d593aa97eda1ef5"
+		},
+		{
+			"ImportPath": "github.com/ethereum/go-ethereum/rlp",
+			"Comment": "v1.5.7-23-g82aa5b1",
+			"Rev": "82aa5b1de69331a43f5050717d593aa97eda1ef5"
+		},
+		{
+			"ImportPath": "github.com/ethereum/go-ethereum/rpc",
+			"Comment": "v1.5.7-23-g82aa5b1",
+			"Rev": "82aa5b1de69331a43f5050717d593aa97eda1ef5"
+		},
+		{
+			"ImportPath": "github.com/ethereum/go-ethereum/trie",
+			"Comment": "v1.5.7-23-g82aa5b1",
+			"Rev": "82aa5b1de69331a43f5050717d593aa97eda1ef5"
+		},
+		{
 			"ImportPath": "github.com/garyburd/redigo/internal",
-			"Comment": "v1.0.0-5-gffa8d46",
-			"Rev": "ffa8d46ada782d81cfda81a0fbd9f45ceae448e8"
+			"Comment": "v1.0.0-17-g908534c",
+			"Rev": "908534c8b97586a4597e3fa195875d2d26502b97"
 		},
 		{
 			"ImportPath": "github.com/garyburd/redigo/redis",
-			"Comment": "v1.0.0-5-gffa8d46",
-			"Rev": "ffa8d46ada782d81cfda81a0fbd9f45ceae448e8"
+			"Comment": "v1.0.0-17-g908534c",
+			"Rev": "908534c8b97586a4597e3fa195875d2d26502b97"
 		},
 		{
 			"ImportPath": "github.com/gorilla/context",
@@ -25,8 +120,8 @@
 		},
 		{
 			"ImportPath": "github.com/gorilla/mux",
-			"Comment": "v1.1-27-g757bef9",
-			"Rev": "757bef944d0f21880861c2dd9c871ca543023cba"
+			"Comment": "v1.3.0",
+			"Rev": "392c28fe23e1c45ddba891b0320b3b5df220beea"
 		},
 		{
 			"ImportPath": "github.com/gorilla/securecookie",
@@ -39,18 +134,77 @@
 			"Rev": "83c8db3bdc9be789e57e3756ffbcffd2d7d40176"
 		},
 		{
-			"ImportPath": "github.com/leekchan/accounting",
-			"Comment": "v0.2",
-			"Rev": "a35854c075934d6aa1a6c1ab3ea8a82ee0dc1a93"
+			"ImportPath": "github.com/mitchellh/mapstructure",
+			"Rev": "db1efb556f84b25a0a13a04aad883943538ad2e0"
 		},
 		{
-			"ImportPath": "github.com/mitchellh/mapstructure",
-			"Rev": "bfdb1a85537d60bc7e954e600c250219ea497417"
+			"ImportPath": "github.com/pborman/uuid",
+			"Comment": "v1.0-21-g1b00554",
+			"Rev": "1b00554d822231195d1babd97ff4a781231955c9"
+		},
+		{
+			"ImportPath": "github.com/rcrowley/go-metrics",
+			"Rev": "1f30fe9094a513ce4c700b9a54458bbb0c96996c"
+		},
+		{
+			"ImportPath": "github.com/rjeczalik/notify",
+			"Rev": "b8dab33f409f63a90858d0eff0da94ed1a692b66"
+		},
+		{
+			"ImportPath": "github.com/rs/cors",
+			"Comment": "v1.0",
+			"Rev": "a62a804a8a009876ca59105f7899938a1349f4b3"
+		},
+		{
+			"ImportPath": "github.com/rs/xhandler",
+			"Comment": "v1.0-1-ged27b6f",
+			"Rev": "ed27b6fd65218132ee50cd95f38474a3d8a2cd12"
 		},
 		{
 			"ImportPath": "github.com/satori/go.uuid",
 			"Comment": "v1.1.0-6-gb061729",
 			"Rev": "b061729afc07e77a8aa4fad0a2fd840958f1942a"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/pbkdf2",
+			"Rev": "41d678d1df78cd0410143162dff954e6dc09300f"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/ripemd160",
+			"Rev": "41d678d1df78cd0410143162dff954e6dc09300f"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/scrypt",
+			"Rev": "41d678d1df78cd0410143162dff954e6dc09300f"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "f2499483f923065a842d38eb4c7f1927e6fc6e6d"
+		},
+		{
+			"ImportPath": "golang.org/x/net/websocket",
+			"Rev": "f2499483f923065a842d38eb4c7f1927e6fc6e6d"
+		},
+		{
+			"ImportPath": "golang.org/x/tools/go/ast/astutil",
+			"Rev": "f8ed2e405fdcbb42c55233531ad98721e6d1cb3e"
+		},
+		{
+			"ImportPath": "golang.org/x/tools/imports",
+			"Rev": "f8ed2e405fdcbb42c55233531ad98721e6d1cb3e"
+		},
+		{
+			"ImportPath": "gopkg.in/fatih/set.v0",
+			"Comment": "v0.1.0-3-g27c4092",
+			"Rev": "27c40922c40b43fe04554d8223a402af3ea333f3"
+		},
+		{
+			"ImportPath": "gopkg.in/karalabe/cookiejar.v2/collections/prque",
+			"Rev": "8dcd6a7f4951f6ff3ee9cbb919a06d8925822e57"
+		},
+		{
+			"ImportPath": "gopkg.in/natefinch/npipe.v2",
+			"Rev": "c1b8fa8bdccecb0b8db834ee0b92fdbcfa606dd6"
 		}
 	]
 }

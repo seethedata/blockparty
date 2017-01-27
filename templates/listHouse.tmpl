@@ -68,7 +68,6 @@
 		askingPrice=$("#askingPrice").val();
 		askingPrice=cleanInput(askingPrice);
 		if ($.isNumeric(askingPrice)) {
-			callHouseForSale('{{range .Houses}}{{.Contract}}{{end}}', askingPrice,'{{range .Users}}{{if eq .Type "System"}}{{.Address}}{{end}}{{end}}');
 			parameters={"askingPrice":askingPrice};
 	
 			var form = $('<form></form>');

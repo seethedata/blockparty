@@ -1,8 +1,8 @@
 ---
 applications:
-- name: blockparty
-  memory: 512M
-disk_quota: 100MB
+- name: bpp
+  memory: 1024M
+disk_quota: 300MB
 buildpack: go_buildpack
 env:
         GOPACKAGENAME : "blockparty"
