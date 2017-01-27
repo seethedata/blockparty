@@ -85,8 +85,6 @@
 		bidAmount=$("#bidAmount").val();
 		bidAmount=cleanInput(bidAmount);
 		if ($.isNumeric(bidAmount)) {
-			callHousePlaceBid({{range .Houses}}{{.Contract}}{{end}},bidAmount,userAddress);
-	
 			parameters={"bidAmount":bidAmount};
 	
 			var form = $('<form></form>');

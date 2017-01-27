@@ -729,9 +729,25 @@ func enterBidHandler(w http.ResponseWriter, r *http.Request) {
 	a := r.PostFormValue("bidAmount")
 	a = strings.Replace(a, ",", "", -1)
 	a = strings.Replace(a, ".", "", -1)
+	aInt, err := strconv.ParseInt(a, 10, 64)
+	if err != nil {
+		log.Fatalf("strconv failed: %v", err)
+	}
 
+	amount := big.NewInt(aInt)
 	var h House
 	h = getHouse(i)
+	contract, err := getContract(i)
+	if err != nil {
+		log.Fatalf("getContract failed: %v", err)
+	}
+
+	signer, err := getSigner(u)
+	if err != nil {
+		log.Fatalf("getSigner failed: %v", err)
+	}
+
+	_, err = contract.PlaceBid(signer, amount)
 
 	c := pool.Get()
 	defer c.Close()
@@ -741,6 +757,23 @@ func enterBidHandler(w http.ResponseWriter, r *http.Request) {
 	check("HMSET", err)
 
 	http.Redirect(w, r, mainURL+"/house/"+i+"/myBid", http.StatusFound)
+}
+
+func getContract(i string) (*Contract, error) {
+	conn, err := ethclient.Dial("http://54.245.138.237:8545")
+	if err != nil {
+		log.Fatalf("Failed to connect to the Ethereum client: %v", err)
+	}
+
+	h := getHouse(i)
+
+	var addr = common.HexToAddress(h.Contract)
+	c, err := NewContract(addr, conn)
+	if err != nil {
+		log.Fatalf("Failed to bind to contract: %v", err)
+	}
+	return c, err
+
 }
 
 func getSigner(u string) (*bind.TransactOpts, error) {
@@ -775,19 +808,6 @@ func enterListingHandler(w http.ResponseWriter, r *http.Request) {
 	a = strings.Replace(a, ",", "", -1)
 	a = strings.Replace(a, ".", "", -1)
 
-	conn, err := ethclient.Dial("http://54.245.138.237:8545")
-	if err != nil {
-		log.Fatalf("Failed to connect to the Ethereum client: %v", err)
-	}
-
-	h := getHouse(i)
-
-	var addr = common.HexToAddress(h.Contract)
-	c, err := NewContract(addr, conn)
-	if err != nil {
-		log.Fatalf("Failed to bind to contract: %v", err)
-	}
-
 	askingPrice := new(big.Int)
 	askingPrice.SetString(a, 10)
 
@@ -796,6 +816,12 @@ func enterListingHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatalf("getSigner failed: %v", err)
 	}
 	signer.GasLimit = maxGas
+
+	c, err := getContract(i)
+	if err != nil {
+		log.Fatalf("getContract failed: %v", err)
+	}
+
 	_, err = c.ForSale(signer, askingPrice)
 	if err != nil {
 		log.Fatalf("ForSale failed: %v", err)
@@ -826,23 +852,16 @@ func delistHouseHandler(w http.ResponseWriter, r *http.Request) {
 	a = strings.Replace(a, ",", "", -1)
 	a = strings.Replace(a, ".", "", -1)
 
-	conn, err := ethclient.Dial("http://54.245.138.237:8545")
-	if err != nil {
-		log.Fatalf("Failed to connect to the Ethereum client: %v", err)
-	}
-
-	h := getHouse(i)
-
-	var addr = common.HexToAddress(h.Contract)
-	c, err := NewContract(addr, conn)
+	c, err := getContract(i)
 	if err != nil {
 		log.Fatalf("Failed to bind to contract: %v", err)
 	}
+
 	signer, err := getSigner(u)
 	if err != nil {
 		log.Fatalf("getSigner failed: %v", err)
 	}
-	log.Printf("maxGas is %v\n", maxGas)
+
 	signer.GasLimit = maxGas
 	_, err = c.NotForSale(signer)
 	if err != nil {
