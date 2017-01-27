@@ -36,7 +36,6 @@
     </body>
     <script>
 	function acceptBid(user,userAddress,houseID,contract) {
-		callHouseAcceptBid(contract,userAddress);
 		window.location={{.URL}} + "/house/" + houseID + "/bid/" + user + "/changeStatus/Accepted";
 	}
 

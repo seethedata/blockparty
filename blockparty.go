@@ -778,7 +778,7 @@ func getContract(i string) (*Contract, error) {
 
 func getSigner(u string) (*bind.TransactOpts, error) {
 	var uaddr = common.HexToAddress(getUser(u).Address)
-	am := accounts.NewManager("keystore", accounts.StandardScryptN, accounts.StandardScryptP)
+	am := accounts.NewManager("keystore", accounts.LightScryptN, accounts.LightScryptP)
 	ac, err := am.Find(accounts.Account{Address: uaddr})
 	if err != nil {
 		log.Fatalf("Account not found: %v", err)
@@ -1195,11 +1195,24 @@ func changeBidStatusHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := changeBidStatus(i, u, s)
 	check("changeBidStatus", err)
+	signer, err := getSigner(u)
+	if err != nil {
+		log.Fatalf("getSigner failed: %v\n", err)
+	}
+	contract, err := getContract(getHouse(i).Address)
+	if err != nil {
+		log.Fatalf("getContract failed: %v\n", err)
+	}
 
+	var uaddr = common.HexToAddress(getUser(u).Address)
 	if s == "Accepted" {
+		contract.AcceptBid(signer, uaddr)
 		err := rejectOtherBids(i, u)
 		check("rejectOtherBids", err)
 		check("changeHouseStatus", err)
+	} else if s == "Rejected" {
+		contract.RejectBid(signer, uaddr)
+
 	}
 	http.Redirect(w, r, mainURL+"/seller", http.StatusFound)
 }
