@@ -1065,7 +1065,24 @@ func lenderHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	u = session.Values["user"].(string)
+
+	if _, ok := session.Values["user"]; ok {
+		u = session.Values["user"].(string)
+		user := getUser(u)
+		if user.ID == "" {
+			session.Options = &sessions.Options{MaxAge: 0}
+			err = createUser(u)
+			check("createUser", err)
+		}
+	} else {
+		u = getNewUserID()
+		session.Values["user"] = u
+		err = createUser(u)
+		check("createUser", err)
+	}
+
+	session.Save(r, w)
+
 
 	t, err := template.ParseFiles("templates/lender.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
@@ -1260,7 +1277,23 @@ func appraiserHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	u = session.Values["user"].(string)
+
+	if _, ok := session.Values["user"]; ok {
+		u = session.Values["user"].(string)
+		user := getUser(u)
+		if user.ID == "" {
+			session.Options = &sessions.Options{MaxAge: 0}
+			err = createUser(u)
+			check("createUser", err)
+		}
+	} else {
+		u = getNewUserID()
+		session.Values["user"] = u
+		err = createUser(u)
+		check("createUser", err)
+	}
+
+	session.Save(r, w)
 
 	t, err := template.ParseFiles("templates/appraiser.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
@@ -1302,7 +1335,23 @@ func sellerHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	u = session.Values["user"].(string)
+
+	if _, ok := session.Values["user"]; ok {
+		u = session.Values["user"].(string)
+		user := getUser(u)
+		if user.ID == "" {
+			session.Options = &sessions.Options{MaxAge: 0}
+			err = createUser(u)
+			check("createUser", err)
+		}
+	} else {
+		u = getNewUserID()
+		session.Values["user"] = u
+		err = createUser(u)
+		check("createUser", err)
+	}
+
+	session.Save(r, w)
 
 	t, err := template.ParseFiles("templates/seller.tmpl", "templates/head.tmpl", "templates/navbar.tmpl")
 	check("Parse template", err)
