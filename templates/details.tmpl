@@ -6,7 +6,7 @@
 	<div class="container-fluid">
 			<div class="center-block">
 				<div id="housePanel" class="panel {{range .Houses}}{{if eq .Status "Sold"}}panel-default{{else}}panel-success{{end}}{{end}}">
-					<div class="panel-heading" onClick="onClick('#persona').show()">
+					<div class="panel-heading" onClick="$('#persona').show()">
 						<h3 class="panel-title" id="panel-title">{{range .Houses}}{{.Address}}{{end}}</h3>
 					</div>
 					<div class="panel-body">
