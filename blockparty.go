@@ -13,15 +13,17 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 )
 
 var (
-	pool    *redis.Pool
-	mainURL string
-	store   = sessions.NewCookieStore([]byte("BlockParty"))
+	pool          *redis.Pool
+	mainURL       string
+	blockchainAPI string
+	store         = sessions.NewCookieStore([]byte("BlockParty"))
 )
 
 type cfServices struct {
@@ -92,12 +94,13 @@ func (b Bid) getKey() string {
 
 //Payload is a generic Container to hold data for templates
 type Payload struct {
-	Houses     []House    `json:"data" redis:"data"`
-	Bids       []Bid      `json:"bids" redis:"bids"`
-	Mortgages  []Mortgage `json:"mortgages" redis:"mortgages"`
-	Users      []User     `json:"users" redis:"users"`
-	URL        string     `json:"URL" redis:"URL"`
-	Parameters []byte     `json:"parameters" redis:"parameters"`
+	Houses        []House    `json:"data" redis:"data"`
+	Bids          []Bid      `json:"bids" redis:"bids"`
+	Mortgages     []Mortgage `json:"mortgages" redis:"mortgages"`
+	Users         []User     `json:"users" redis:"users"`
+	URL           string     `json:"URL" redis:"URL"`
+	BlockchainAPI string     `json:"blockchainAPI" redis:"blockchainAPI"`
+	Parameters    []byte     `json:"parameters" redis:"parameters"`
 }
 
 // User is a user from ethereum
@@ -150,7 +153,7 @@ func check(function string, e error) {
 }
 
 func newPayload() *Payload {
-	return &Payload{URL: mainURL}
+	return &Payload{URL: mainURL, BlockchainAPI: blockchainAPI}
 }
 
 func getHouses() []House {
@@ -366,6 +369,7 @@ func initialize() {
 	env, _ := cfenv.Current()
 	mainURL = "http://" + env.ApplicationURIs[0]
 	services := env.Services
+	blockchainAPI = os.Getenv("BLOCKCHAINAPI")
 
 	var credentials map[string]interface{}
 	var host string

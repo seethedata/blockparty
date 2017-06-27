@@ -10,11 +10,17 @@
 		<script type="text/javascript" src="/js/jquery.min.js"></script>
 		<script type="text/javascript" src="/js/bootstrap.min.js"></script>
 		<script type="text/javascript" src="/js/d3.min.js"></script>
-		<script type="text/javascript" src="/js/blockparty.js"></script>
 		<script type="text/javascript" src="/js/jquery-ui.min.js"></script>
 		<script type="text/javascript" src="/js/waitingfor.js"></script>
+		<script type="text/javascript" src="/js/blockparty.js"></script>
 		<title>BlockParty</title>
 	<script>
+	var Web3 = require('web3');
+	var web3 = new Web3();
+	web3.setProvider(new web3.providers.HttpProvider('http://{{.BlockchainAPI}}'));
+
+	var maxGas=4700000;
+
 	if (! navigator.cookieEnabled) {
 		window.location={{.URL}} + "/missingRequirements";
 	}
