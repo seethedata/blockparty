@@ -19,8 +19,6 @@
 	var web3 = new Web3();
 	web3.setProvider(new web3.providers.HttpProvider('http://{{.BlockchainAPI}}'));
 
-	var maxGas=4700000;
-
 	if (! navigator.cookieEnabled) {
 		window.location={{.URL}} + "/missingRequirements";
 	}
