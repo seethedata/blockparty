@@ -3,8 +3,8 @@
 {{template "head" .}}
 	<body>
 	{{template "navbar" .}}
-	<img style="display:none" onClick="showPersona();" alt="Pathfinder Logo" id="pathfinder" class="center-block" src="/images/Pathfinder-Logo.png"/>
-	<div id="listings" class="container" style="display:none">
+	<img alt="Pathfinder Logo" id="pathfinder" class="center-block" src="/images/Pathfinder-Logo.png"/>
+	<div id="listings" class="container">
 		<div id="houses" class="row">
 		{{range .Houses}}
 			{{template "housePanel" .}}
@@ -13,10 +13,6 @@
 	</div>
 	</body>
 	<script>
-		$("#persona").hide();
-		$("#pathfinder").show();
-		$("#listings").show();
-
     		function showDetails(houseID) {
 			window.location={{.URL}}+"/house/"+houseID;
 		}

@@ -4,7 +4,7 @@
     <body>
 	{{template "navbar" .}}
 	<h2 style="display:none" class="text-center" id="url">{{.URL}}</h2>
-	<img alt="Pathfinder Logo" class="center-block" src="/images/Pathfinder-Logo.png" data-toggle="modal" data-target="#ssModal"/>
+	<img id="logo" alt="Pathfinder Logo" class="center-block" src="/images/Pathfinder-Logo.png" data-toggle="modal" data-target="#ssModal"/>
 	<div id="listings" class="container-fluid">
 		<div id="houses">
 		{{range .Houses}}
@@ -74,6 +74,5 @@
 		callHouseNotForSale(contract,'{{range .Users}}{{if eq .Type "System"}}{{.Address}}{{end}}{{end}}');
 		window.location={{.URL}} + "/house/" + ID + "/changeStatus/Sold";
 	}
-
     </script>
 </html>
