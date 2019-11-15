@@ -1,8 +1,8 @@
 {"services":[
 		{
 			"platform":"pws",
-			"service":"rediscloud",
-			"host":"hostname",
+			"service":"p.redis",
+			"host":"host",
 			"port":"port",
 			"password":"password"
 			},

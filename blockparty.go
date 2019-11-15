@@ -23,6 +23,8 @@ var (
 	pool          *redis.Pool
 	mainURL       string
 	blockchainAPI string
+	blockchainUser string
+	blockchainPassword string
 	store         = sessions.NewCookieStore([]byte("BlockParty"))
 )
 
@@ -100,6 +102,8 @@ type Payload struct {
 	Users         []User     `json:"users" redis:"users"`
 	URL           string     `json:"URL" redis:"URL"`
 	BlockchainAPI string     `json:"blockchainAPI" redis:"blockchainAPI"`
+	BlockchainUser string	 `json:"blockchainUser" redis:"blockchainUser"`
+	BlockchainPassword string `json:"blockchainPassword" redis:"blockchainPassword"`
 	Parameters    []byte     `json:"parameters" redis:"parameters"`
 }
 
@@ -153,7 +157,7 @@ func check(function string, e error) {
 }
 
 func newPayload() *Payload {
-	return &Payload{URL: mainURL, BlockchainAPI: blockchainAPI}
+	return &Payload{URL: mainURL, BlockchainAPI: blockchainAPI, BlockchainUser: blockchainUser, BlockchainPassword: blockchainPassword}
 }
 
 func getHouses() []House {
@@ -370,6 +374,8 @@ func initialize() {
 	mainURL = "http://" + env.ApplicationURIs[0]
 	services := env.Services
 	blockchainAPI = os.Getenv("BLOCKCHAINAPI")
+	blockchainUser = os.Getenv("BLOCKCHAINUSER")
+	blockchainPassword = os.Getenv("BLOCKCHAINPASSWORD")
 
 	var credentials map[string]interface{}
 	var host string
@@ -382,7 +388,7 @@ func initialize() {
 			if _, ok := credentials[service.Host]; ok {
 				host = credentials[service.Host].(string)
 			} else {
-				log.Fatal("Unable to identify Redis host from config. Platform attempted:" + service.Platform)
+				log.Fatal("Unable to identify Redis host from config. Platform attempted:" + service.Platform + " service name: " + service.Name + " host:" + service.Host)
 			}
 			if _, ok := credentials[service.Password]; ok {
 				password = credentials[service.Password].(string)
@@ -635,6 +641,9 @@ func listingsHandler(w http.ResponseWriter, r *http.Request) {
 	listings.Houses = getHouses()
 	listings.Users = append(listings.Users, getUser(u))
 	check("Marshal", err)
+	fmt.Println(listings.BlockchainAPI)
+	fmt.Println(listings.BlockchainUser)
+	fmt.Println(listings.BlockchainPassword)
 	t.Execute(w, listings)
 }
 
