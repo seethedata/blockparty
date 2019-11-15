@@ -7,5 +7,7 @@ buildpack: go_buildpack
 env:
         GOPACKAGENAME : "blockparty"
         BLOCKCHAINAPI : 
+        BLOCKCHAINUSER: 
+        BLOCKCHAINPASSWORD: 
 services:
-- TILT_REDIS
+- spinnaker-redis
