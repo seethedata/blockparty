@@ -17,7 +17,9 @@
 	<script>
 	var Web3 = require('web3');
 	var web3 = new Web3();
-	web3.setProvider(new web3.providers.HttpProvider('http://{{.BlockchainAPI}}'));
+	provider = new web3.providers.HttpProvider({{.BlockchainAPI}}, 5000, {{.BlockchainUser}}, {{.BlockchainPassword}});
+	web3.setProvider(provider);
+
 
 	if (! navigator.cookieEnabled) {
 		window.location={{.URL}} + "/missingRequirements";

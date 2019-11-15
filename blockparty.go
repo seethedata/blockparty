@@ -371,7 +371,7 @@ func initialize() {
 	check("Unmarshal", err)
 
 	env, _ := cfenv.Current()
-	mainURL = "http://" + env.ApplicationURIs[0]
+	mainURL = env.ApplicationURIs[0]
 	services := env.Services
 	blockchainAPI = os.Getenv("BLOCKCHAINAPI")
 	blockchainUser = os.Getenv("BLOCKCHAINUSER")
