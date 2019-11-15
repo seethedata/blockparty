@@ -8,6 +8,6 @@ env:
         GOPACKAGENAME : "blockparty"
         BLOCKCHAINAPI : 
         BLOCKCHAINUSER: 
-        BLOCKCHAINPASSWORD:  
+        BLOCKCHAINPASSWORD: 
 services:
 - spinnaker-redis
