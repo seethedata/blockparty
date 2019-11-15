@@ -1,1 +1,4 @@
 keystore
+*~
+manifest.yml
+*.swp
